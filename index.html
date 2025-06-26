@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Three.js AR Tap to Place</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+      background: #121212;
+      color: white;
+      user-select: none;
+    }
+    #ui {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      z-index: 10;
+    }
+    button, a {
+      background: #007AFF;
+      border: none;
+      padding: 14px 26px;
+      font-size: 17px;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+      text-decoration: none;
+      user-select: none;
+      box-shadow: 0 5px 15px rgba(0,122,255,0.4);
+      transition: background-color 0.3s ease;
+    }
+    button:hover, a:hover {
+      background: #005BBB;
+      box-shadow: 0 8px 20px rgba(0,91,187,0.6);
+    }
+    #message {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 18px;
+      max-width: 90vw;
+      text-align: center;
+      z-index: 10;
+      pointer-events: none;
+      user-select: none;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+<div id="ui">
+  <button id="ar-button" style="display:none;">Enter AR</button>
+  <a id="quick-look-link" rel="ar" href="model1.glb" style="display:none;">View in AR (iOS Quick Look)</a>
+</div>
+<div id="message"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.153.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.153.0/examples/jsm/webxr/ARButton.js"></script>
+
+<script>
+  const arButton = document.getElementById('ar-button');
+  const quickLookLink = document.getElementById('quick-look-link');
+  const message = document.getElementById('message');
+
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+  // Show appropriate UI depending on platform and support
+  if (navigator.xr && navigator.xr.isSessionSupported) {
+    navigator.xr.isSessionSupported('immersive-ar').then((supported) => {
+      if (supported) {
+        arButton.style.display = 'inline-block';
+        message.textContent = 'Tap "Enter AR" to start, then tap on a surface to place the cube.';
+      } else {
+        if (isIOS) {
+          quickLookLink.style.display = 'inline-block';
+          message.textContent = 'Tap the button below to view the model in AR on iOS.';
+        } else {
+          message.textContent = 'AR not supported on this device/browser.';
+        }
+      }
+    });
+  } else {
+    if (isIOS) {
+      quickLookLink.style.display = 'inline-block';
+      message.textContent = 'Tap the button below to view the model in AR on iOS.';
+    } else {
+      message.textContent = 'WebXR not supported on this browser.';
+    }
+  }
+
+  // Three.js variables
+  let camera, scene, renderer;
+  let reticle;
+  let controller;
+  let placedObject = null;
+
+  // Initialize Three.js scene and AR session
+  function init() {
+    scene = new THREE.Scene();
+
+    camera = new THREE.PerspectiveCamera(
+      70,
+      window.innerWidth / window.innerHeight,
+      0.01,
+      20
+    );
+
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.xr.enabled = true;
+    document.body.appendChild(renderer.domElement);
+
+    // Add light
+    const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
+    light.position.set(0.5, 1, 0.25);
+    scene.add(light);
+
+    // Reticle - shows where the object will be placed
+    const ringGeometry = new THREE.RingGeometry(0.07, 0.09, 32).rotateX(-Math.PI / 2);
+    const ringMaterial = new THREE.MeshBasicMaterial({
+      color: 0x00ff00,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.7,
+    });
+    reticle = new THREE.Mesh(ringGeometry, ringMaterial);
+    reticle.visible = false;
+    scene.add(reticle);
+
+    // Controller for tap events
+    controller = renderer.xr.getController(0);
+    controller.addEventListener('select', onSelect);
+    scene.add(controller);
+
+    window.addEventListener('resize', onWindowResize);
+  }
+
+  // Handle window resize
+  function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+
+  // When user taps screen (select event), place or move the cube
+  function onSelect() {
+    if (reticle.visible) {
+      if (!placedObject) {
+        // Create cube on first tap
+        const geometry = new THREE.BoxGeometry(0.15, 0.15, 0.15);
+        const material = new THREE.MeshNormalMaterial();
+        placedObject = new THREE.Mesh(geometry, material);
+        placedObject.position.setFromMatrixPosition(reticle.matrix);
+        placedObject.quaternion.setFromRotationMatrix(reticle.matrix);
+        scene.add(placedObject);
+        message.textContent = 'Cube placed! Tap again to move.';
+      } else {
+        // Move cube to new reticle position
+        placedObject.position.setFromMatrixPosition(reticle.matrix);
+        placedObject.quaternion.setFromRotationMatrix(reticle.matrix);
+        message.textContent = 'Cube moved! Tap again to move.';
+      }
+    }
+  }
+
+  // Animation loop: update reticle with hit test
+  function animate() {
+    renderer.setAnimationLoop(render);
+  }
+
+  // Render loop
+  function render(timestamp, frame) {
+    if (frame) {
+      const referenceSpace = renderer.xr.getReferenceSpace();
+      const session = renderer.xr.getSession();
+
+      if (!reticle.visible) {
+        // Request hit test source once when session starts
+        if (!hitTestSourceRequested) {
+          session.requestReferenceSpace('viewer').then((refSpace) => {
+            session.requestHitTestSource({ space: refSpace }).then((source) => {
+              hitTestSource = source;
+            });
+          });
+
+          session.addEventListener('end', () => {
+            hitTestSourceRequested = false;
+            hitTestSource = null;
+            reticle.visible = false;
+          });
+
+          hitTestSourceRequested = true;
+        }
+      }
+
+      if (hitTestSource) {
+        const hitTestResults = frame.getHitTestResults(hitTestSource);
+
+        if (hitTestResults.length > 0) {
+          const hit = hitTestResults[0];
+          const pose = hit.getPose(referenceSpace);
+          reticle.visible = true;
+          reticle.matrix.fromArray(pose.transform.matrix);
+        } else {
+          reticle.visible = false;
+        }
+      }
+    }
+    renderer.render(scene, camera);
+  }
+
+  let hitTestSource = null;
+  let hitTestSourceRequested = false;
+
+  arButton.addEventListener('click', async () => {
+    if (!renderer) {
+      init();
+    }
+
+    arButton.style.display = 'none';
+    message.textContent = 'Move your device slowly to detect surfaces...';
+
+    const session = await navigator.xr.requestSession('immersive-ar', {
+      requiredFeatures: ['hit-test'],
+      optionalFeatures: ['dom-overlay'],
+      domOverlay: { root: document.body },
+    });
+
+    renderer.xr.setSession(session);
+
+    animate();
+  });
+</script>
+
+</body>
+</html>
