@@ -1,138 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AR Model - Cross Platform</title>
-
-  <!-- Three.js -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.153.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.153.0/examples/js/loaders/GLTFLoader.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.153.0/examples/jsm/webxr/ARButton.js"></script>
-
+  <meta charset="UTF-8">
+  <title>Hosokawa Micron</title>
   <style>
-    body, html {
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
       margin: 0;
-      padding: 0;
-      overflow: hidden;
-      background: #000;
+      font-family: sans-serif;
+      font-size: 1em;
+      text-align: center;
+      background: #001EC1;
+      background: linear-gradient(0deg,rgba(0, 30, 193, 1) 0%, rgba(0, 118, 216, 1) 100%);
     }
-    canvas {
-      display: block;
+    
+    #exclamationMark{
+      height: 321px;
+      padding: 0px;
+      margin-bottom: 25px;
+      margin-top: -54px;
     }
-    #iosAR {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      z-index: 10;
-      padding: 12px 20px;
-      background: white;
-      color: black;
-      font-size: 16px;
-      border-radius: 8px;
-      display: none;
+    
+    .message{
+      align-content: center;
+      height: 900px;
+      background-color: #ffffff;
+      margin: auto;
+      width:100%;
+      top: 50%;
+    }
+    
+    .text{
+      width:852px;
+      margin: auto;
+      padding: 0px;
+      margin-bottom: 0px;
+      font-weight: bold;
+    }
+    
+    .text p{
+      align-items: center;
+      text-align: center;
+      font-family:Arial, Helvetica, sans-serif;
+      font-size: 52px;
+    }
+    
+    @media screen and (orientation: landscape) {
+      .text p{
+        font-size: 25px;
+      }
+      #exclamationMark{
+        height: 156px;
+        margin-top: 2px;
+      }
+      .message{
+        height: 370px;
+      }
+    }
+    
+    p {
+      padding: 0px;
+      margin: 0px;
     }
   </style>
-</head>
-<body>
+  
+  <script> 
+    // URL to redirect to
+    const targetURL = "main.html";
 
-  <!-- iOS fallback AR button -->
-  <a id="iosAR" rel="ar" href="models/model1.usdz">
-    View in AR (iOS)
-  </a>
+    //Redirect after 3 seconds
+    window.onload = () => {
+      setTimeout(() => {
+        window.location.href = targetURL;
+      }, 5000);
+    };
 
-  <script type="module">
-    // Detect iOS
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-
-    if (isIOS) {
-      document.getElementById('iosAR').style.display = 'block';
-    } else if (navigator.xr) {
-      // --- Three.js AR code (Android only) ---
-      const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
-      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.xr.enabled = true;
-      document.body.appendChild(renderer.domElement);
-
-      const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
-      scene.add(light);
-
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-      directionalLight.position.set(1, 1, 1);
-      scene.add(directionalLight);
-
-      const controller = renderer.xr.getController(0);
-      scene.add(controller);
-
-      let reticle;
-      const ringGeo = new THREE.RingGeometry(0.1, 0.11, 32).rotateX(-Math.PI / 2);
-      const ringMat = new THREE.MeshBasicMaterial({ color: 0x00ffcc });
-      reticle = new THREE.Mesh(ringGeo, ringMat);
-      reticle.matrixAutoUpdate = false;
-      reticle.visible = false;
-      scene.add(reticle);
-
-      let model = null;
-      new THREE.GLTFLoader().load('models/model1.glb', (gltf) => {
-        model = gltf.scene;
-        model.scale.set(1, 1, 1);
-        model.visible = false;
-        scene.add(model);
-      });
-
-      controller.addEventListener('select', () => {
-        if (reticle.visible && model) {
-          model.position.setFromMatrixPosition(reticle.matrix);
-          model.visible = true;
-        }
-      });
-
-      let hitTestSource = null;
-      let hitTestSourceRequested = false;
-
-      renderer.setAnimationLoop((timestamp, frame) => {
-        if (frame) {
-          const refSpace = renderer.xr.getReferenceSpace();
-          const session = renderer.xr.getSession();
-
-          if (!hitTestSourceRequested) {
-            session.requestReferenceSpace('viewer').then((viewerSpace) => {
-              session.requestHitTestSource({ space: viewerSpace }).then((source) => {
-                hitTestSource = source;
-              });
-            });
-
-            session.addEventListener('end', () => {
-              hitTestSourceRequested = false;
-              hitTestSource = null;
-            });
-
-            hitTestSourceRequested = true;
-          }
-
-          if (hitTestSource) {
-            const hitTestResults = frame.getHitTestResults(hitTestSource);
-            if (hitTestResults.length > 0) {
-              const hit = hitTestResults[0];
-              const pose = hit.getPose(refSpace);
-              reticle.visible = true;
-              reticle.matrix.fromArray(pose.transform.matrix);
-            } else {
-              reticle.visible = false;
-            }
-          }
-        }
-
-        renderer.render(scene, camera);
-      });
-
-      // Start AR
-      document.body.appendChild(ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] }));
-    } else {
-      alert("WebXR is not supported on this device.");
-    }
+    // Redirect on tap/click
+    document.addEventListener("click", () => {
+      window.location.href = targetURL;
+    });
+    
+    document.addEventListener("touchstart", () => {
+      window.location.href = targetURL;
+    });
   </script>
+  
+</head>
+  
+<body>
+  <div class="message">
+    <img src="icon/exclamationMark.png" id="exclamationMark">
+    <div class="text">
+      <p>ARコンテンツをご利用の際は </p>
+      <p>周囲の安全のご確認、 </p>
+      <p>周りの人との距離を取ってから、</p> 
+      <p>ご利用をお願いいたします。</p>
+    </div>
+  </div>
 </body>
 </html>
