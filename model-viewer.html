@@ -8,11 +8,6 @@
   <!-- model-viewer -->
   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
 
-  <!-- three.js and loaders -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.153.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.153.0/examples/js/loaders/GLTFLoader.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.153.0/examples/jsm/webxr/ARButton.js"></script>
-
   <style>
     body, html {
       margin: 0; padding: 0; height: 100%; overflow: hidden;
@@ -35,7 +30,6 @@
       z-index: 15;
       border-radius: 4px;
     }
-    /* Your dot and dim styles - adapt as needed */
     .dot {
       width: 15px; height: 15px; border-radius: 50%;
       background-color: black; opacity: 0.8;
@@ -67,7 +61,6 @@
 </head>
 
 <body>
-  <!-- MODEL VIEWER WITH MEASUREMENTS -->
   <model-viewer
     id="modelViewer"
     shadow-intensity="1"
@@ -80,7 +73,7 @@
     ar-modes="webxr scene-viewer quick-look"
     src=""
   >
-    <!-- Measurement hotspots: keep your original data-position, data-normal -->
+    <!-- Measurement hotspots -->
     <button slot="hotspot-dot+X-Y+Z" class="dot" data-position="1 -1 1" data-normal="1 0 0"></button>
     <button slot="hotspot-dim+X-Y" class="dim" data-position="1 -1 0" data-normal="1 0 0"></button>
     <button slot="hotspot-dot+X-Y-Z" class="dot" data-position="1 -1 -1" data-normal="1 0 0"></button>
@@ -101,17 +94,16 @@
       <line class="dimensionLine"></line>
     </svg>
 
-    <!-- Custom AR button -->
     <button slot="ar-button" id="custom-ar-button" style="background-color: black; color: white;">
       Enter AR (Custom)
     </button>
   </model-viewer>
 
-  <!-- Three.js AR container -->
   <div id="threejs-ar-container"></div>
   <button id="exit-ar-button">Exit AR</button>
 
   <script type="module">
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.153.0/build/three.module.js';
     import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.153.0/examples/jsm/loaders/GLTFLoader.js';
     import { ARButton } from 'https://cdn.jsdelivr.net/npm/three@0.153.0/examples/jsm/webxr/ARButton.js';
 
@@ -129,8 +121,7 @@
       console.warn('No model URL provided in query parameters.');
     }
 
-    // --- Measurement system functions adapted from your original script ---
-
+    // Measurement functions
     const dimLines = modelViewer.querySelectorAll('line');
 
     function drawLine(svgLine, dot1, dot2, dimensionHotspot) {
@@ -156,7 +147,6 @@
       drawLine(dimLines[4], modelViewer.queryHotspot('hotspot-dot-X-Y-Z'), modelViewer.queryHotspot('hotspot-dot-X-Y+Z'), modelViewer.queryHotspot('hotspot-dim-X-Y'));
     }
 
-    // Update hotspot positions & dimension labels on model load
     modelViewer.addEventListener('load', () => {
       const center = modelViewer.getBoundingBoxCenter();
       const size = modelViewer.getDimensions();
@@ -225,7 +215,7 @@
 
     modelViewer.addEventListener('camera-change', renderSVG);
 
-    // --- Three.js AR Setup and Controls ---
+    // --- Three.js AR setup ---
 
     let camera, scene, renderer, controller;
     let reticle;
@@ -252,7 +242,6 @@
       light.position.set(0.5, 1, 0.25);
       scene.add(light);
 
-      // Reticle for placement
       const geometry = new THREE.RingGeometry(0.15, 0.2, 32).rotateX(- Math.PI / 2);
       const material = new THREE.MeshBasicMaterial({ color: 0x0fff00 });
       reticle = new THREE.Mesh(geometry, material);
@@ -260,13 +249,12 @@
       reticle.visible = false;
       scene.add(reticle);
 
-      // Load your model in AR
       const loader = new GLTFLoader();
       loader.load(
         modelUrl,
         (gltf) => {
           model = gltf.scene;
-          model.scale.set(0.5, 0.5, 0.5); // Adjust scale if needed
+          model.scale.set(0.5, 0.5, 0.5);
           model.visible = false;
           scene.add(model);
         },
@@ -333,7 +321,6 @@
       renderer.render(scene, camera);
     }
 
-    // Start AR - hide model-viewer, show Three.js AR
     function startThreeJsAR() {
       modelViewer.style.display = 'none';
       arContainer.style.display = 'block';
@@ -343,19 +330,16 @@
         initThreeJsAR();
       }
 
-      // Start AR session
       navigator.xr.requestSession('immersive-ar', {
         requiredFeatures: ['hit-test']
       }).then((session) => {
         renderer.xr.setSession(session);
       }).catch(err => {
         alert('Failed to start AR session: ' + err.message);
-        // fallback: show model-viewer again
         exitThreeJsAR();
       });
     }
 
-    // Exit AR - stop session, show model-viewer with measurement again
     function exitThreeJsAR() {
       if (renderer && renderer.xr.getSession()) {
         renderer.xr.getSession().end();
@@ -365,7 +349,6 @@
       modelViewer.style.display = 'block';
     }
 
-    // AR button handler
     arButton.addEventListener('click', () => {
       if (navigator.xr && navigator.xr.isSessionSupported) {
         navigator.xr.isSessionSupported('immersive-ar').then((supported) => {
@@ -381,7 +364,6 @@
     });
 
     exitArBtn.addEventListener('click', exitThreeJsAR);
-
   </script>
 </body>
 </html>
