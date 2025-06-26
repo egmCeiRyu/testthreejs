@@ -105,7 +105,6 @@
   <script type="module">
     import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.153.0/build/three.module.js';
     import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.153.0/examples/jsm/loaders/GLTFLoader.js';
-    import { ARButton } from 'https://cdn.jsdelivr.net/npm/three@0.153.0/examples/jsm/webxr/ARButton.js';
 
     const urlParams = new URLSearchParams(window.location.search);
     const modelUrl = urlParams.get('model');
@@ -114,14 +113,14 @@
     const arContainer = document.getElementById('threejs-ar-container');
     const exitArBtn = document.getElementById('exit-ar-button');
 
-    // Set model-viewer src from URL
+    // Set model-viewer src from URL param
     if (modelUrl) {
       modelViewer.setAttribute('src', modelUrl);
     } else {
       console.warn('No model URL provided in query parameters.');
     }
 
-    // Measurement functions
+    // Measurement lines and drawing
     const dimLines = modelViewer.querySelectorAll('line');
 
     function drawLine(svgLine, dot1, dot2, dimensionHotspot) {
@@ -155,60 +154,27 @@
       const y2 = size.y / 2;
       const z2 = size.z / 2;
 
-      modelViewer.updateHotspot({
-        name: 'hotspot-dot+X-Y+Z',
-        position: `${center.x + x2} ${center.y - y2} ${center.z + z2}`
-      });
-      modelViewer.updateHotspot({
-        name: 'hotspot-dim+X-Y',
-        position: `${center.x + x2 * 1.2} ${center.y - y2 * 1.1} ${center.z}`
-      });
+      modelViewer.updateHotspot({ name: 'hotspot-dot+X-Y+Z', position: `${center.x + x2} ${center.y - y2} ${center.z + z2}` });
+      modelViewer.updateHotspot({ name: 'hotspot-dim+X-Y', position: `${center.x + x2 * 1.2} ${center.y - y2 * 1.1} ${center.z}` });
       modelViewer.querySelector('button[slot="hotspot-dim+X-Y"]').textContent = `${(size.z).toFixed(1)} m`;
 
-      modelViewer.updateHotspot({
-        name: 'hotspot-dot+X-Y-Z',
-        position: `${center.x + x2} ${center.y - y2} ${center.z - z2}`
-      });
-      modelViewer.updateHotspot({
-        name: 'hotspot-dim+X-Z',
-        position: `${center.x + x2 * 1.2} ${center.y} ${center.z - z2 * 1.2}`
-      });
+      modelViewer.updateHotspot({ name: 'hotspot-dot+X-Y-Z', position: `${center.x + x2} ${center.y - y2} ${center.z - z2}` });
+      modelViewer.updateHotspot({ name: 'hotspot-dim+X-Z', position: `${center.x + x2 * 1.2} ${center.y} ${center.z - z2 * 1.2}` });
       modelViewer.querySelector('button[slot="hotspot-dim+X-Z"]').textContent = `${(size.y).toFixed(1)} m`;
 
-      modelViewer.updateHotspot({
-        name: 'hotspot-dot+X+Y-Z',
-        position: `${center.x + x2} ${center.y + y2} ${center.z - z2}`
-      });
-      modelViewer.updateHotspot({
-        name: 'hotspot-dim+Y-Z',
-        position: `${center.x} ${center.y + y2 * 1.1} ${center.z - z2 * 1.1}`
-      });
+      modelViewer.updateHotspot({ name: 'hotspot-dot+X+Y-Z', position: `${center.x + x2} ${center.y + y2} ${center.z - z2}` });
+      modelViewer.updateHotspot({ name: 'hotspot-dim+Y-Z', position: `${center.x} ${center.y + y2 * 1.1} ${center.z - z2 * 1.1}` });
       modelViewer.querySelector('button[slot="hotspot-dim+Y-Z"]').textContent = `${(size.x).toFixed(1)} m`;
 
-      modelViewer.updateHotspot({
-        name: 'hotspot-dot-X+Y-Z',
-        position: `${center.x - x2} ${center.y + y2} ${center.z - z2}`
-      });
-      modelViewer.updateHotspot({
-        name: 'hotspot-dim-X-Z',
-        position: `${center.x - x2 * 1.2} ${center.y} ${center.z - z2 * 1.2}`
-      });
+      modelViewer.updateHotspot({ name: 'hotspot-dot-X+Y-Z', position: `${center.x - x2} ${center.y + y2} ${center.z - z2}` });
+      modelViewer.updateHotspot({ name: 'hotspot-dim-X-Z', position: `${center.x - x2 * 1.2} ${center.y} ${center.z - z2 * 1.2}` });
       modelViewer.querySelector('button[slot="hotspot-dim-X-Z"]').textContent = `${(size.y).toFixed(1)} m`;
 
-      modelViewer.updateHotspot({
-        name: 'hotspot-dot-X-Y-Z',
-        position: `${center.x - x2} ${center.y - y2} ${center.z - z2}`
-      });
-      modelViewer.updateHotspot({
-        name: 'hotspot-dim-X-Y',
-        position: `${center.x - x2 * 1.2} ${center.y - y2 * 1.1} ${center.z}`
-      });
+      modelViewer.updateHotspot({ name: 'hotspot-dot-X-Y-Z', position: `${center.x - x2} ${center.y - y2} ${center.z - z2}` });
+      modelViewer.updateHotspot({ name: 'hotspot-dim-X-Y', position: `${center.x - x2 * 1.2} ${center.y - y2 * 1.1} ${center.z}` });
       modelViewer.querySelector('button[slot="hotspot-dim-X-Y"]').textContent = `${(size.z).toFixed(1)} m`;
 
-      modelViewer.updateHotspot({
-        name: 'hotspot-dot-X-Y+Z',
-        position: `${center.x - x2} ${center.y - y2} ${center.z + z2}`
-      });
+      modelViewer.updateHotspot({ name: 'hotspot-dot-X-Y+Z', position: `${center.x - x2} ${center.y - y2} ${center.z + z2}` });
 
       renderSVG();
     });
@@ -242,6 +208,7 @@
       light.position.set(0.5, 1, 0.25);
       scene.add(light);
 
+      // Reticle for placement
       const geometry = new THREE.RingGeometry(0.15, 0.2, 32).rotateX(- Math.PI / 2);
       const material = new THREE.MeshBasicMaterial({ color: 0x0fff00 });
       reticle = new THREE.Mesh(geometry, material);
@@ -249,6 +216,7 @@
       reticle.visible = false;
       scene.add(reticle);
 
+      // Load the model for AR
       const loader = new GLTFLoader();
       loader.load(
         modelUrl,
@@ -367,4 +335,3 @@
   </script>
 </body>
 </html>
-
