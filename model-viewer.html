@@ -53,7 +53,7 @@
 
         // Load model
         const loader = new GLTFLoader();
-        loader.load('model1.glb', (gltf) => {
+        loader.load('../model1.glb', (gltf) => {
           model = gltf.scene;
           model.visible = false;
           model.scale.set(0.2, 0.2, 0.2);
