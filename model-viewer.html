@@ -1,45 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Three.js AR with Gestures</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <style>
-      body { margin: 0; overflow: hidden; }
-      #start-ar {
-        position: absolute;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        padding: 12px 24px;
-        background: #0088ff;
-        color: white;
-        border: none;
-        font-size: 18px;
-        border-radius: 8px;
-        cursor: pointer;
-        z-index: 10;
-      }
-    </style>
-  </head>
-  <body>
-    <button id="start-ar">Enter AR</button>
+<head>
+  <meta charset="UTF-8" />
+  <title>Three.js AR with iOS Quick Look</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { margin: 0; overflow: hidden; }
+    #start-ar {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 24px;
+      background: #0088ff;
+      color: white;
+      border: none;
+      font-size: 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+  <a id="ios-ar-link" rel="ar" href="model1.usdz" style="display: none;">
+    <img src="quicklook-button.png" alt="View in AR" />
+  </a>
+  <button id="start-ar">Enter AR</button>
 
-    <script type="module">
+  <script>
+    // Detect iOS
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    if (isIOS) {
+      document.getElementById('start-ar').style.display = 'none';
+      const iosLink = document.getElementById('ios-ar-link');
+      iosLink.style.display = 'block';
+      iosLink.click(); // auto open Quick Look
+    }
+  </script>
+
+  <script type="module">
+    if (!/iPad|iPhone|iPod/.test(navigator.userAgent)) {
       import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
       import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/loaders/GLTFLoader.js';
       import { ARButton } from 'https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/webxr/ARButton.js';
 
       let camera, scene, renderer, controller, reticle, model;
       let currentSession = null;
-
       let initialPinchDistance = null;
       let lastRotation = 0;
 
       init();
 
       function init() {
-        // Scene setup
         scene = new THREE.Scene();
         camera = new THREE.PerspectiveCamera();
 
@@ -51,16 +64,14 @@
         const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
         scene.add(light);
 
-        // Load model
         const loader = new GLTFLoader();
-        loader.load('../model1.glb', (gltf) => {
+        loader.load('model1.glb', (gltf) => {
           model = gltf.scene;
           model.visible = false;
           model.scale.set(0.2, 0.2, 0.2);
           scene.add(model);
         });
 
-        // Reticle for hit-test
         reticle = new THREE.Mesh(
           new THREE.RingGeometry(0.1, 0.11, 32).rotateX(-Math.PI / 2),
           new THREE.MeshBasicMaterial({ color: 0x00ffff })
@@ -86,7 +97,6 @@
         });
 
         renderer.setAnimationLoop(render);
-
         setupTouchGestures();
       }
 
@@ -188,6 +198,7 @@
           return Math.atan2(dy, dx);
         }
       }
-    </script>
-  </body>
+    }
+  </script>
+</body>
 </html>
