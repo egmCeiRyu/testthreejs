@@ -112,6 +112,9 @@
       cursor: pointer;
     }
 
+    #footer{
+      background-color: aqua;
+    }
 
     /* Optional: Shrink button slightly on smaller screens */
     @media screen and (max-width: 600px) and (orientation: landscape){
