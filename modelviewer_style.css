@@ -1,7 +1,3 @@
-    model-viewer[ar] button[aria-label="Take picture"],
-    model-viewer[ar] button[title="Take picture"] {
-      display: none !important;
-    }
 
 /* === Base Styles === */
     body {
@@ -41,7 +37,6 @@
       
     .spec-overlay h2 {
       margin-bottom: 0px;
-      margin-top: 0px;
       font-size: 25px;
       margin-top: 54px;
     }
@@ -369,20 +364,6 @@
       width: 100%;
       height: 100vh;
       overflow: hidden;
-    }
-
-    /* === texts=== */
-
-    #paragraph1{
-      padding: 0px;
-    }
-
-    #paragraph2{
-      padding: 0px;
-    }
-
-    #paragraph3{
-      padding: 0px;
     }
 
 
