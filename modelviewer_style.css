@@ -1,0 +1,495 @@
+    model-viewer[ar] button[aria-label="Take picture"],
+    model-viewer[ar] button[title="Take picture"] {
+      display: none !important;
+    }
+
+/* === Base Styles === */
+    body {
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+      background-color: linear-gradient( #F4F6F8, #D1D1D1);
+      padding: 0px;
+      height: 0px;
+    }
+ 
+    /* Tela de especificações (overlay) */
+    .spec-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: linear-gradient(to bottom right, rgba(0,0,0,0.85), rgba(50,50,50,0.95));
+      color: white;
+      display: none; /* show via JS */
+      align-items: center;
+      z-index: 999;
+      flex-direction: column;
+      text-align: center;
+      padding: 0px;
+      box-sizing: border-box;
+      overflow-y: auto; /* in case content exceeds height */
+    }
+
+    .spec-overlay p{
+      width: 313px;
+      text-align:justify;
+      font-size: 13px;
+      margin-top: -3px;
+      margin-bottom: 0px;
+    }
+      
+    .spec-overlay h2 {
+      margin-bottom: 0px;
+      margin-top: 0px;
+      font-size: 25px;
+      margin-top: 54px;
+    }
+
+    .close-spec {
+      margin-top: 3px;
+      padding: 16px 31px;
+      color: white;
+      cursor: pointer;
+      width: 61px;
+      top: 80%;
+      margin-bottom: 33px;
+    }
+      
+    #modelLink{
+      padding-top: 4px;
+      padding-bottom: 10px;
+      color: #006bff; 
+      text-decoration: underline;
+    }
+    
+    #controls {
+      position: absolute;
+      bottom: 16px;
+      left: 16px;
+      max-width: unset;
+      transform: unset;
+      pointer-events: auto;
+      z-index: 100;
+    }
+
+    .dot {
+      display: none;
+    }
+
+    .glass {
+      background: rgba(255, 255, 255, 0.37);
+      backdrop-filter: blur(8px) contrast(0.89) saturate(1.27);
+      -webkit-backdrop-filter: blur(8px) contrast(0.89) saturate(1.27);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+    }
+
+    .dim {
+      border-radius: 4px;
+      border: none;
+      box-sizing: border-box;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+      color: rgba(0, 0, 0, 0.8);
+      display: block;
+      font-family: Futura, Helvetica Neue, sans-serif;
+      font-size: 1em;
+      font-weight: 700;
+      max-width: 128px;
+      overflow-wrap: break-word;
+      padding: 0.5em 1em;
+      position: absolute;
+      width: max-content;
+      height: max-content;
+      transform: translate3d(-50%, -50%, 0);
+      pointer-events: none;
+      --min-hotspot-opacity: 0;
+    }
+
+
+    .dimensionLineContainer {
+      pointer-events: none;
+      display: block;
+    }
+
+    .dimensionLine {
+      stroke: #000000;
+      stroke-width: 2;
+      stroke-dasharray: 2;
+    }
+
+    .hide {
+      display: none;
+    }
+
+    /* This keeps child nodes hidden while the element loads */
+    :not(:defined)>* {
+      display: none;
+    } 
+      
+      
+    #closeIframeBtn {
+      position: absolute;
+      top: -72px;
+      right: -7px;
+      z-index: 10;
+      background: #ff5f57;
+      color: #ffffff;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      font-weight: bold;
+      cursor: pointer;
+      border: solid #002476;
+      font-size: 19px;
+
+      /* Center the "×" icon inside the button */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      line-height: 1;
+    }
+      
+    #iframeWrapper{
+      display: none;
+      position: relative; 
+      width: 99%; 
+      max-width: 800px; 
+      height: 532px;
+      margin: -198px auto;  
+    }
+      
+    iframe{
+      position: relative;
+      align-content: center;
+      margin-top: -57px;
+    }
+      
+      
+    .ar-overlay {
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.85);
+      color: white;
+      font-size: 1.5rem;
+      font-family: sans-serif;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      text-align: center;
+    }
+    .loadingText img{
+      width: 350px;
+    }
+       
+
+    /* === AR Button === */
+    #ar-button {
+      position: absolute;
+      color: #ffffff;
+      font-size: 15px;
+      cursor: pointer;
+      font-family: "novecento-sans", sans-serif;
+      z-index: 10;
+      width: 95px;
+      height: 95px;
+      bottom: 10%;
+      right: 0%;
+    }
+
+    #ar-button:after {
+      content: "";
+      background: #ff0000;
+      display: block;
+      position: absolute;
+      opacity: 0;
+      transition: all 0.8s
+    }
+
+    #ar-button:active:after {
+      padding: 0;
+      margin: 0;
+      opacity: 1;
+      transition: 0s
+    }
+
+    .mainpage-container{
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      background-color: #0c3879;
+      height: 500px;
+      width: 100%;
+      max-width: 675px;
+      margin: 25px auto;
+      padding: 5px;
+      box-shadow: 0 0 35px rgba(0, 0, 0, 0.4);
+      border-radius: 20px;
+      box-sizing: border-box;
+    }
+
+    .mainpage-title {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      background-color: #ffffff;
+        height: 21%;
+      width: 75%;
+      max-width: 601px;
+      padding: 10px 15px;
+      margin: 11px auto;
+      border-radius: 10px;
+      font-family: "novecento-sans", sans-serif;
+      text-align: center;
+      color: #898989;
+    }
+
+    .armenu-mainpage{
+      justify-content: center;
+      display: block;
+      position: absolute;
+      margin-top: 417px;
+      width: 331px;
+      background-color: white; 
+    }
+
+    /* === Title Section === */
+    div.title {
+      display: flex;
+      flex-direction: row;
+    }
+
+    .specification {
+      width: 50px;
+      height: 50px;
+      border-radius: 20px;
+      position: absolute;  
+      right: 5%;
+      top: 5%
+    }
+
+
+    .return {
+      width: 50px;
+      height: 50px;
+      position: absolute;
+      transform: translateX(-50%);
+      left: 10%;
+      top: 5%;
+      border-radius: 45px;
+    }
+
+
+    /* === Return Button === */
+    #return-button {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        padding: 10px 20px;
+        background-color: #ffffff;
+        color: #1E1E2F;
+        border: none;
+        cursor: pointer;
+        z-index: 10;
+        border-radius: 10px;
+        font-family: "novecento-sans", sans-serif;
+    }
+
+    img.qrcode {
+        width: 70px;
+        height: 70px;
+        padding-bottom: 10px;
+        position: absolute;
+        padding-right:411px;
+        display: block;
+
+    }
+
+    h1 {
+        text-decoration: underline;
+    }
+
+
+    /* === QR Image === */
+    img.modelqr {
+        width: 80px;
+        height: 80px;
+        margin-left: 13px;
+        margin-top: 55px;
+        z-index: 10;
+        position: fixed;
+    }
+
+
+    .thumbnail-link:hover {
+        transform: translateY(-5px);
+    }
+
+    /* === Model Viewer === */
+    model-viewer {
+        width: 100vw;
+        height: calc(var(--vh, 1vh) * 100);
+        display: block;
+        background-color: #e7e7e7;
+    }
+
+    .qrcode {
+        width: 53px;
+        height: 60px;
+        margin-top: 10px;
+    }
+
+    #footerContents {
+        background-color: black;
+        height: auto;
+        text-align: center;
+        color: aliceblue
+    }
+
+    #modelIframe {
+      width: 85vw;   /* 90% of viewport width */
+      height: 71vh;  /* 60% of viewport height */
+      max-width: 546px;
+      background-color: white;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    #viewer-container{
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* === texts=== */
+
+    #paragraph1{
+      padding: 0px;
+    }
+
+    #paragraph2{
+      padding: 0px;
+    }
+
+    #paragraph3{
+      padding: 0px;
+    }
+
+
+    @media (max-width: 600px) {
+        .mainpage-container {
+            width: 90%;
+            height: auto;
+        }
+
+        .return, .specification {
+            top: 5%;
+            width: 35px;
+            height: 35px;
+        }
+    }
+
+    @media screen and (orientation: landscape) {
+        .return{
+         top: 5%;
+         left: 8%;
+        }
+        
+        #ar-button {
+          bottom: 43px; 
+          right: 25px; 
+          width: 95px;
+          height: 95px;
+        }
+
+        #iframeWrapper{
+          width: 623px;
+          height: 328px;
+        }
+
+        #modelLink{
+          width: 400px;
+          height: 33px;
+        }
+        
+        #closeIframeBtn{
+          position: absolute;
+          top: -83px;
+          right: 24px;
+          z-index: 10;
+          background: #ff5f57;
+          color: #ffffff;
+          border-radius: 50%;
+          width: 40px;
+          height: 40px;
+          font-weight: bold;
+          cursor: pointer;
+          border: solid #002476;
+          font-size: 19px;
+        }
+    }
+     
+
+    @media (max-width: 600px) and (orientation:landscape) {
+        .spec-overlay {
+          padding: 40px 20px;
+          font-size: 1em;
+        }
+      
+        .spec-overlay p {
+          font-size: 10px;
+        }
+        
+        .title {
+          flex-direction: column;
+        }
+
+        .qrcode {
+          margin-top: 0px;
+        }
+    }
+
+    @media screen and (max-width: 600px) and (orientation: landscape) {
+      .ar-overlay {
+        display: none;
+      } 
+    
+    }
+
+    @media only screen and (max-width: 600px) {
+      .dim {
+        font-size: 3vw;
+      }
+      
+      .qrcode {
+            display: none;
+        }
+    }
+
+    /* === Responsive === */
+    @media (min-width: 600px) {
+        .thumbnail-link {
+            width: 25%;
+        }
+    }
+
+    @media only screen and (orientation:landscape) {
+        .loadingText img{
+          width: 300px;
+        }
+    }
+
+
+
+
+

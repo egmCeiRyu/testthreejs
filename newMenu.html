@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.typekit.net/zfi8dmc.css">
+  <link rel="stylesheet" href="newmenu_style.css">
+  <title>3D Model Thumbnails</title>
+</head>
+
+<body>
+  <div class="title">
+    <img src=icon/logo.png alt="logo" class="companylogo">
+    <img src=icon/tittleMenu.png alt="logo" class="hosokawalogo">
+  </div>
+
+  <div class="thumbnail-container" id="model-thumbnails">
+    <div class="thumbnail-link" data-model="models/model1.glb" data-name="model1">
+      <img src="thumbnails/model1_thumb.png" alt="Model 1" class="thumbnail-img">
+      <span class="label">混合機<br> サイクロミックス<br> CLX-1000</span>
+    </div>
+    <div class="thumbnail-link" data-model="models/model2.glb" data-name="model2">
+      <img src="thumbnails/model2_thumb.png" alt="Model 2" class="thumbnail-img">
+      <span class="label">混合機<br> サイクロミックス<br> CLX-1000</span>
+    </div>
+    <div class="thumbnail-link" data-model="models/model3.glb" data-name="model3">
+      <img src="thumbnails/model3_thumb.png" alt="Model 3" class="thumbnail-img">
+      <span class="label">混合機<br> サイクロミックス<br> CLX-1000</span>
+    </div>
+    <div class="thumbnail-link" data-model="models/model4.glb" data-name="model4">
+      <img src="thumbnails/model4_thumb.png" alt="Model 4" class="thumbnail-img">
+      <span class="label">混合機<br> サイクロミックス<br> CLX-1000</span>
+    </div>
+    <div class="thumbnail-link" data-model="models/model5.glb" data-name="model5">
+      <img src="thumbnails/model5_thumb.png" alt="Model 5" class="thumbnail-img">
+      <span class="label">混合機<br> サイクロミックス<br> CLX-1000</span>
+    </div>
+    <div class="thumbnail-link" data-model="models/model6.glb" data-name="model6">
+      <img src="thumbnails/model6_thumb.png" alt="Model 6" class="thumbnail-img">
+      <span class="label">混合機<br> サイクロミックス<br> CLX-1000</span>
+    </div>
+    <div class="thumbnail-link" data-model="models/model7.glb" data-name="model7">
+      <img src="thumbnails/model7_thumb.png" alt="Model 7" class="thumbnail-img">
+      <span class="label">混合機<br> サイクロミックス<br> CLX-1000</span>
+    </div>
+    <div class="thumbnail-link" data-model="models/model8.glb" data-name="model8">
+      <img src="thumbnails/model8_thumb.png" alt="Model 8" class="thumbnail-img">
+      <span class="label">混合機<br> サイクロミックス<br> CLX-1000</span>
+    </div>
+    <div class="thumbnail-link" data-model="models/model9.glb" data-name="model9">
+      <img src="thumbnails/model9_thumb.png" alt="Model 9" class="thumbnail-img">
+      <span class="label">混合機<br> サイクロミックス<br> CLX-1000</span>
+    </div>
+    <div class="thumbnail-link" data-model="models/model10.glb" data-name="model10">
+      <img src="thumbnails/model10_thumb.png" alt="Model 10" class="thumbnail-img">
+      <span class="label">混合機<br> サイクロミックス<br> CLX-1000</span>
+    </div>
+  </div>
+  <div id="footer">
+  </div>
+
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js";
+    import { getAnalytics, logEvent } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-analytics.js";
+    import { firebaseConfig } from "./firebase-config.js";
+
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+
+    const thumbnails = document.querySelectorAll('.thumbnail-link');
+
+    thumbnails.forEach(thumb => {
+      thumb.addEventListener('click', () => {
+        const modelUrl = thumb.getAttribute('data-model');
+        const modelName = thumb.getAttribute('data-name');
+
+        // Log the event immediately when the thumbnail is clicked
+        logEvent(analytics, "thumbnail_click", { model_name: modelName });
+
+        // Redirect directly to the model-viewer page
+        window.location.href = `model-viewer.html?model=${encodeURIComponent(modelUrl)}`;
+      });
+    });
+  </script>
+</body>
+</html>
