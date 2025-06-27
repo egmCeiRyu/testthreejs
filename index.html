@@ -1,111 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Three.AR.js with Gestures</title>
+  <meta charset="UTF-8">
+  <title>Hosokawa Micron</title>
   <style>
-    body { margin: 0; overflow: hidden; }
-    canvas { display: block; }
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      font-family: sans-serif;
+      font-size: 1em;
+      text-align: center;
+      background: #001EC1;
+      background: linear-gradient(0deg,rgba(0, 30, 193, 1) 0%, rgba(0, 118, 216, 1) 100%);
+    }
+    
+    #exclamationMark{
+      height: 321px;
+      padding: 0px;
+      margin-bottom: 25px;
+      margin-top: -54px;
+    }
+    
+    .message{
+      align-content: center;
+      height: 900px;
+      background-color: #ffffff;
+      margin: auto;
+      width:100%;
+      top: 50%;
+    }
+    
+    .text{
+      width:852px;
+      margin: auto;
+      padding: 0px;
+      margin-bottom: 0px;
+      font-weight: bold;
+    }
+    
+    .text p{
+      align-items: center;
+      text-align: center;
+      font-family:Arial, Helvetica, sans-serif;
+      font-size: 52px;
+    }
+    
+    @media screen and (orientation: landscape) {
+      .text p{
+        font-size: 25px;
+      }
+      #exclamationMark{
+        height: 156px;
+        margin-top: 2px;
+      }
+      .message{
+        height: 370px;
+      }
+    }
+    
+    p {
+      padding: 0px;
+      margin: 0px;
+    }
   </style>
-</head>
-<body>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.161.0/examples/js/loaders/GLTFLoader.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three.ar.js@1.1.2/dist/three.ar.js"></script>
+  
+  <script> 
+    // URL to redirect to
+    const targetURL = "main.html";
 
-  <script>
-    let scene, camera, renderer, arView, controls, reticle;
-    let glbModel, selectedModel = null;
-    let initialDistance = null, initialScale = 1, initialRotation = null;
+    //Redirect after 3 seconds
+    window.onload = () => {
+      setTimeout(() => {
+        window.location.href = targetURL;
+      }, 5000);
+    };
 
-    const modelUrl = 'https://modelviewer.dev/shared-assets/models/Astronaut.glb';
-
-    THREE.ARUtils.getARDisplay().then(display => {
-      scene = new THREE.Scene();
-
-      camera = new THREE.ARPerspectiveCamera(
-        display, 60, window.innerWidth / window.innerHeight, display.depthNear, display.depthFar
-      );
-
-      renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      document.body.appendChild(renderer.domElement);
-
-      arView = new THREE.ARView(display, renderer);
-      controls = new THREE.VRControls(camera);
-
-      const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
-      scene.add(light);
-
-      reticle = new THREE.ARReticle(display);
-      scene.add(reticle);
-
-      const loader = new THREE.GLTFLoader();
-      loader.load(modelUrl, gltf => {
-        glbModel = gltf.scene;
-      });
-
-      window.addEventListener('touchend', () => {
-        if (reticle.visible && glbModel) {
-          const clone = glbModel.clone();
-          clone.position.copy(reticle.position);
-          clone.quaternion.copy(reticle.quaternion);
-          scene.add(clone);
-          selectedModel = clone;
-          initialScale = 1;
-        }
-      });
-
-      function render() {
-        controls.update();
-        arView.render();
-        renderer.clearDepth();
-        renderer.render(scene, camera);
-        display.requestAnimationFrame(render);
-      }
-
-      render();
+    // Redirect on tap/click
+    document.addEventListener("click", () => {
+      window.location.href = targetURL;
     });
-
-    // GESTURE HANDLING
-    function getDistance(t1, t2) {
-      const dx = t1.clientX - t2.clientX;
-      const dy = t1.clientY - t2.clientY;
-      return Math.sqrt(dx * dx + dy * dy);
-    }
-
-    function getAngle(t1, t2) {
-      return Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX);
-    }
-
-    window.addEventListener('touchstart', (event) => {
-      if (event.touches.length === 2) {
-        initialDistance = getDistance(event.touches[0], event.touches[1]);
-        initialRotation = getAngle(event.touches[0], event.touches[1]);
-      }
-    }, false);
-
-    window.addEventListener('touchmove', (event) => {
-      if (!selectedModel || event.touches.length !== 2) return;
-
-      const newDistance = getDistance(event.touches[0], event.touches[1]);
-      const scaleFactor = newDistance / initialDistance;
-      selectedModel.scale.setScalar(initialScale * scaleFactor);
-
-      const newRotation = getAngle(event.touches[0], event.touches[1]);
-      const rotationDelta = newRotation - initialRotation;
-      selectedModel.rotation.y += rotationDelta;
-      initialRotation = newRotation;
-
-      event.preventDefault();
-    }, { passive: false });
-
-    window.addEventListener('touchend', () => {
-      if (selectedModel) {
-        initialScale = selectedModel.scale.x;
-      }
+    
+    document.addEventListener("touchstart", () => {
+      window.location.href = targetURL;
     });
   </script>
+  
+</head>
+  
+<body>
+  <div class="message">
+    <img src="icon/exclamationMark.png" id="exclamationMark">
+    <div class="text">
+      <p>ARコンテンツをご利用の際は </p>
+      <p>周囲の安全のご確認、 </p>
+      <p>周りの人との距離を取ってから、</p> 
+      <p>ご利用をお願いいたします。</p>
+    </div>
+  </div>
 </body>
 </html>
