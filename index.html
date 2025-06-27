@@ -38,7 +38,7 @@
         <h1>Augmented Reality Demo</h1>
         <p id="platform-message">Loading AR experience...</p>
         <button id="arButton" disabled>Start AR</button>
-        <a id="iosArLink" rel="ar" href="" download="robot.usdz">View in AR (iOS)</a>
+        <a id="iosArLink" rel="ar" href="" download="model1.usdz">View in AR (iOS)</a>
         <p id="status">Checking device compatibility and loading model...</p>
     </div>
 
@@ -56,8 +56,8 @@
         import { ARButton } from 'https://unpkg.com/three@0.165.0/examples/jsm/webxr/ARButton.js';
 
         // --- Configuration for your model ---
-        const GLB_MODEL_PATH = 'models/robot.glb';
-        const USDZ_MODEL_PATH = 'models/robot.usdz';
+        const GLB_MODEL_PATH = 'models/model1.glb';
+        const USDZ_MODEL_PATH = 'models/model1.usdz';
         const MODEL_SCALE = 0.1; // Adjust this if your model is too big/small
 
         // --- Global Variables (for Three.js) ---
