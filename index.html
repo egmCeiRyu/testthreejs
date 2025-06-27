@@ -1,124 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Three.js WebXR AR</title>
-    <style>
-      body { margin: 0; overflow: hidden; }
-      canvas { display: block; }
-      #enter-ar {
-        position: absolute;
-        top: 20px;
-        left: 20px;
-        padding: 10px 20px;
-        background: white;
-        border-radius: 6px;
-        font-size: 16px;
-        z-index: 1;
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Three.js AR</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+  <script type="module">
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
+    import { ARButton } from 'https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/webxr/ARButton.js';
+    import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/loaders/GLTFLoader.js';
+
+    let camera, scene, renderer;
+    let controller, reticle, model;
+    let hitTestSource = null;
+    let hitTestSourceRequested = false;
+
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera();
+
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.xr.enabled = true;
+    document.body.appendChild(renderer.domElement);
+
+    document.body.appendChild(ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] }));
+
+    const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
+    scene.add(light);
+
+    const ringGeo = new THREE.RingGeometry(0.1, 0.11, 32).rotateX(-Math.PI / 2);
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+    reticle = new THREE.Mesh(ringGeo, ringMat);
+    reticle.matrixAutoUpdate = false;
+    reticle.visible = false;
+    scene.add(reticle);
+
+    const loader = new GLTFLoader();
+    loader.load('https://modelviewer.dev/shared-assets/models/Astronaut.glb', gltf => {
+      model = gltf.scene;
+    });
+
+    controller = renderer.xr.getController(0);
+    controller.addEventListener('select', () => {
+      if (reticle.visible && model) {
+        const placed = model.clone();
+        placed.position.setFromMatrixPosition(reticle.matrix);
+        placed.quaternion.setFromRotationMatrix(reticle.matrix);
+        scene.add(placed);
       }
-    </style>
-  </head>
-  <body>
-    <button id="enter-ar">Enter AR</button>
-    <script type="module">
-      import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
-      import { ARButton } from 'https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/webxr/ARButton.js';
-      import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/loaders/GLTFLoader.js';
+    });
+    scene.add(controller);
 
-      let camera, scene, renderer;
-      let controller;
-      let reticle;
-      let model = null;
+    renderer.setAnimationLoop((timestamp, frame) => {
+      if (frame) {
+        const refSpace = renderer.xr.getReferenceSpace();
+        const session = renderer.xr.getSession();
 
-      init();
-
-      function init() {
-        scene = new THREE.Scene();
-
-        camera = new THREE.PerspectiveCamera();
-
-        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.xr.enabled = true;
-        document.body.appendChild(renderer.domElement);
-
-        // Add light
-        const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
-        scene.add(light);
-
-        // Reticle for placement
-        const geometry = new THREE.RingGeometry(0.1, 0.11, 32).rotateX(-Math.PI / 2);
-        const material = new THREE.MeshBasicMaterial({ color: 0x00ffff });
-        reticle = new THREE.Mesh(geometry, material);
-        reticle.matrixAutoUpdate = false;
-        reticle.visible = false;
-        scene.add(reticle);
-
-        // Load GLB model
-        const loader = new GLTFLoader();
-        loader.load('https://modelviewer.dev/shared-assets/models/Astronaut.glb', function (gltf) {
-          model = gltf.scene;
-        });
-
-        // Controller for input
-        controller = renderer.xr.getController(0);
-        controller.addEventListener('select', () => {
-          if (reticle.visible && model) {
-            const clone = model.clone();
-            clone.position.setFromMatrixPosition(reticle.matrix);
-            clone.quaternion.setFromRotationMatrix(reticle.matrix);
-            scene.add(clone);
-          }
-        });
-        scene.add(controller);
-
-        document.getElementById('enter-ar').addEventListener('click', () => {
-          document.body.appendChild(ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] }));
-        });
-
-        renderer.setAnimationLoop(render);
-      }
-
-      function render(timestamp, frame) {
-        if (frame) {
-          const referenceSpace = renderer.xr.getReferenceSpace();
-          const session = renderer.xr.getSession();
-
-          if (!hitTestSourceRequested) {
-            session.requestReferenceSpace('viewer').then(space => {
-              session.requestHitTestSource({ space }).then(source => {
-                hitTestSource = source;
-              });
+        if (!hitTestSourceRequested) {
+          session.requestReferenceSpace('viewer').then(space => {
+            session.requestHitTestSource({ space }).then(source => {
+              hitTestSource = source;
             });
+          });
 
-            session.addEventListener('end', () => {
-              hitTestSourceRequested = false;
-              hitTestSource = null;
-            });
+          session.addEventListener('end', () => {
+            hitTestSourceRequested = false;
+            hitTestSource = null;
+          });
 
-            hitTestSourceRequested = true;
-          }
-
-          if (hitTestSource) {
-            const hitTestResults = frame.getHitTestResults(hitTestSource);
-            if (hitTestResults.length) {
-              const hit = hitTestResults[0];
-              const pose = hit.getPose(referenceSpace);
-              reticle.visible = true;
-              reticle.matrix.fromArray(pose.transform.matrix);
-            } else {
-              reticle.visible = false;
-            }
-          }
+          hitTestSourceRequested = true;
         }
 
-        renderer.render(scene, camera);
+        if (hitTestSource) {
+          const hits = frame.getHitTestResults(hitTestSource);
+          if (hits.length) {
+            const hit = hits[0];
+            const pose = hit.getPose(refSpace);
+            reticle.visible = true;
+            reticle.matrix.fromArray(pose.transform.matrix);
+          } else {
+            reticle.visible = false;
+          }
+        }
       }
 
-      let hitTestSource = null;
-      let hitTestSourceRequested = false;
-    </script>
-  </body>
+      renderer.render(scene, camera);
+    });
+  </script>
+</body>
 </html>
