@@ -8,6 +8,100 @@
     body { margin: 0; overflow: hidden; }
     canvas { display: block; }
   </style>
+  <script type="module">
+  import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
+  import { ARButton } from 'https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/webxr/ARButton.js';
+  import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/loaders/GLTFLoader.js';
+
+  const arButton = document.getElementById('ar-button');
+  const modelViewer = document.getElementById('modelViewer');
+  const modelUrl = new URLSearchParams(window.location.search).get('model');
+
+  arButton.addEventListener('click', async () => {
+    modelViewer.style.display = 'none';
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera();
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.xr.enabled = true;
+    document.body.appendChild(renderer.domElement);
+
+    document.body.appendChild(ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] }));
+
+    const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
+    scene.add(light);
+
+    const reticleGeo = new THREE.RingGeometry(0.1, 0.12, 32).rotateX(-Math.PI / 2);
+    const reticleMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+    const reticle = new THREE.Mesh(reticleGeo, reticleMat);
+    reticle.matrixAutoUpdate = false;
+    reticle.visible = false;
+    scene.add(reticle);
+
+    const loader = new GLTFLoader();
+    let glbModel = null;
+
+    if (modelUrl) {
+      loader.load(modelUrl, gltf => {
+        glbModel = gltf.scene;
+      });
+    }
+
+    const controller = renderer.xr.getController(0);
+    controller.addEventListener('select', () => {
+      if (reticle.visible && glbModel) {
+        const clone = glbModel.clone();
+        clone.position.setFromMatrixPosition(reticle.matrix);
+        clone.quaternion.setFromRotationMatrix(reticle.matrix);
+        scene.add(clone);
+      }
+    });
+    scene.add(controller);
+
+    let hitTestSource = null;
+    let hitTestSourceRequested = false;
+
+    renderer.setAnimationLoop((timestamp, frame) => {
+      if (frame) {
+        const referenceSpace = renderer.xr.getReferenceSpace();
+        const session = renderer.xr.getSession();
+
+        if (!hitTestSourceRequested) {
+          session.requestReferenceSpace('viewer').then(space => {
+            session.requestHitTestSource({ space }).then(source => {
+              hitTestSource = source;
+            });
+          });
+
+          session.addEventListener('end', () => {
+            hitTestSourceRequested = false;
+            hitTestSource = null;
+            modelViewer.style.display = 'block';
+            renderer.domElement.remove();
+            document.querySelector('.xr-button')?.remove(); // cleanup ARButton
+          });
+
+          hitTestSourceRequested = true;
+        }
+
+        if (hitTestSource) {
+          const hitTestResults = frame.getHitTestResults(hitTestSource);
+          if (hitTestResults.length) {
+            const hit = hitTestResults[0];
+            const pose = hit.getPose(referenceSpace);
+            reticle.visible = true;
+            reticle.matrix.fromArray(pose.transform.matrix);
+          } else {
+            reticle.visible = false;
+          }
+        }
+      }
+
+      renderer.render(scene, camera);
+    });
+  });
+</script>
 </head>
 <body>
   <script type="module">
