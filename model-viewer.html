@@ -1,306 +1,78 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>3D Model Viewer with Three.js AR</title>
-  
-  <!-- Original model-viewer CSS -->
-  <link rel="stylesheet" href="modelviewer_style.css" />
-  <link rel="stylesheet" href="https://use.typekit.net/zfi8dmc.css" />
-  
-  <!-- Three.js and loaders -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.153.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.153.0/examples/js/loaders/GLTFLoader.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.153.0/examples/jsm/webxr/ARButton.js"></script>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Three.js AR Viewer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body { margin: 0; overflow: hidden; }
+      canvas { display: block; }
+      #enter-ar {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 12px 24px;
+        background: #0088ff;
+        color: white;
+        border: none;
+        font-size: 18px;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="enter-ar">Enter AR</button>
 
-  <style>
-    body, html {
-      margin: 0; padding: 0; overflow: hidden;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-      Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      height: 100vh;
-    }
+    <script type="module">
+      import * as THREE from 'https://cdn.skypack.dev/three';
+      import { GLTFLoader } from 'https://cdn.skypack.dev/three/examples/jsm/loaders/GLTFLoader.js';
+      import { ARButton } from 'https://cdn.skypack.dev/three/examples/jsm/webxr/ARButton.js';
 
-    #threejs-ar-canvas {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw;
-      height: 100vh;
-      display: none; /* Hide initially */
-      touch-action: none;
-      z-index: 10;
-    }
+      let camera, scene, renderer, controller;
 
-    #modelViewer {
-      width: 100vw;
-      height: 100vh;
-      display: block;
-    }
+      init();
 
-    #ar-button {
-      position: fixed;
-      bottom: 20px;
-      left: 20px;
-      z-index: 20;
-      width: 60px;
-      height: 60px;
-      cursor: pointer;
-    }
+      function init() {
+        // Renderer
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.xr.enabled = true;
+        document.body.appendChild(renderer.domElement);
 
-    #arOverlay {
-      /* your existing overlay styles */
-      display: none;
-      position: fixed;
-      z-index: 100;
-      top: 0; left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0,0,0,0.7);
-      justify-content: center;
-      align-items: center;
-      color: white;
-      font-size: 18px;
-    }
-  </style>
-</head>
+        // Scene & Camera
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera();
 
-<body>
+        // Light
+        const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
+        scene.add(light);
 
-  <!-- Original model-viewer -->
-  <model-viewer
-    id="modelViewer"
-    src=""
-    shadow-intensity="1"
-    shadow-softness="1"
-    camera-controls
-    touch-action="pan-y, pan-x, none"
-    camera-orbit="-25deg 75deg auto"
-    scale="1 1 1"
-    orbit-sensitivity="2"
-    ar-modes="webxr scene-viewer quick-look"
-  >
-    <!-- your hotspots and other buttons here -->
-    <button style="background-color:rgb(0,0,0)" slot="hotspot-dot+X-Y+Z" class="dot" data-position="1 -1 1" data-normal="1 0 0"></button>
-    <!-- ... other hotspots omitted for brevity ... -->
-  </model-viewer>
-
-  <!-- Three.js AR Canvas -->
-  <canvas id="threejs-ar-canvas"></canvas>
-
-  <!-- Your existing AR button -->
-  <img id="ar-button" src="icon/arbtn.png" alt="Enter AR" title="Enter AR" />
-
-  <div id="arOverlay" class="ar-overlay">
-    <div class="loadingText">
-      <img src="icon/explanation.png" alt="Loading AR" />
-    </div>
-  </div>
-
-  <!-- Your other UI elements (buttonsGRP, specOverlay, etc.) remain the same -->
-
-  <script type="module">
-    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.153.0/build/three.module.js';
-    import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.153.0/examples/jsm/loaders/GLTFLoader.js';
-    import { ARButton } from 'https://cdn.jsdelivr.net/npm/three@0.153.0/examples/jsm/webxr/ARButton.js';
-
-    const modelViewer = document.getElementById('modelViewer');
-    const arButton = document.getElementById('ar-button');
-    const arOverlay = document.getElementById('arOverlay');
-    const canvas = document.getElementById('threejs-ar-canvas');
-
-    // Get model URL from query string to load same model in Three.js
-    const urlParams = new URLSearchParams(window.location.search);
-    const modelUrl = urlParams.get('model') || modelViewer.getAttribute('src') || 'model.glb';
-
-    // Three.js variables
-    let camera, scene, renderer;
-    let controller;
-    let reticle;
-    let model = null;
-
-    let hitTestSource = null;
-    let hitTestSourceRequested = false;
-
-    function initThreeJS() {
-      // Scene
-      scene = new THREE.Scene();
-
-      // Camera
-      camera = new THREE.PerspectiveCamera(
-        70,
-        window.innerWidth / window.innerHeight,
-        0.01,
-        20
-      );
-
-      // Renderer
-      renderer = new THREE.WebGLRenderer({
-        canvas: canvas,
-        alpha: true,
-        antialias: true,
-      });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.xr.enabled = true;
-      renderer.setAnimationLoop(render);
-
-      // Lighting
-      const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
-      scene.add(light);
-
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-      directionalLight.position.set(0.5, 1, 0.5);
-      scene.add(directionalLight);
-
-      // Reticle for placement
-      const ringGeometry = new THREE.RingGeometry(0.1, 0.11, 32).rotateX(-Math.PI / 2);
-      const ringMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffff });
-      reticle = new THREE.Mesh(ringGeometry, ringMaterial);
-      reticle.matrixAutoUpdate = false;
-      reticle.visible = false;
-      scene.add(reticle);
-
-      // Controller to handle touch for placement
-      controller = renderer.xr.getController(0);
-      controller.addEventListener('select', onSelect);
-      scene.add(controller);
-
-      // Load GLB model but do not add yet
-      const loader = new GLTFLoader();
-      loader.load(
-        modelUrl,
-        (gltf) => {
-          model = gltf.scene;
-          model.visible = false; // hide initially
-          model.scale.set(1, 1, 1);
+        // Load Model
+        const loader = new GLTFLoader();
+        loader.load('models/model1.glb', function (gltf) {
+          const model = gltf.scene;
+          model.scale.set(0.2, 0.2, 0.2); // Adjust scale if needed
+          model.position.set(0, 0, -0.5); // Half meter in front
           scene.add(model);
-        },
-        undefined,
-        (error) => {
-          console.error('Error loading GLB model:', error);
-        }
-      );
-
-      window.addEventListener('resize', onWindowResize, false);
-    }
-
-    function onWindowResize() {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    }
-
-    // Place model on select event
-    function onSelect() {
-      if (reticle.visible && model) {
-        model.position.setFromMatrixPosition(reticle.matrix);
-        model.visible = true;
-      }
-    }
-
-    function render(timestamp, frame) {
-      if (frame) {
-        const referenceSpace = renderer.xr.getReferenceSpace();
-        const session = renderer.xr.getSession();
-
-        if (!hitTestSourceRequested) {
-          session.requestReferenceSpace('viewer').then((refSpace) => {
-            session.requestHitTestSource({ space: refSpace }).then((source) => {
-              hitTestSource = source;
-            });
-          });
-
-          session.addEventListener('end', () => {
-            hitTestSourceRequested = false;
-            hitTestSource = null;
-          });
-
-          hitTestSourceRequested = true;
-        }
-
-        if (hitTestSource) {
-          const hitTestResults = frame.getHitTestResults(hitTestSource);
-
-          if (hitTestResults.length > 0) {
-            const hit = hitTestResults[0];
-
-            const pose = hit.getPose(referenceSpace);
-
-            reticle.visible = true;
-            reticle.matrix.fromArray(pose.transform.matrix);
-          } else {
-            reticle.visible = false;
-          }
-        }
-      }
-
-      renderer.render(scene, camera);
-    }
-
-    // Start AR session with Three.js
-    async function startARWithThreeJS() {
-      arOverlay.style.display = 'none';
-      modelViewer.style.display = 'none'; // Hide model-viewer when entering AR
-      canvas.style.display = 'block'; // Show Three.js canvas
-
-      if (!renderer) {
-        initThreeJS();
-      }
-
-      try {
-        const session = await navigator.xr.requestSession('immersive-ar', {
-          requiredFeatures: ['hit-test', 'dom-overlay'],
-          domOverlay: { root: document.body },
         });
 
-        session.addEventListener('end', () => {
-          // When AR session ends, show model-viewer again
-          canvas.style.display = 'none';
-          modelViewer.style.display = 'block';
+        // Controller
+        controller = renderer.xr.getController(0);
+        scene.add(controller);
+
+        // AR Button
+        document.getElementById('enter-ar').addEventListener('click', () => {
+          document.body.appendChild(ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] }));
+          document.getElementById('enter-ar').style.display = 'none';
+          renderer.setAnimationLoop(render);
         });
-
-        renderer.xr.setSession(session);
-      } catch (e) {
-        alert('Failed to start AR session: ' + e.message);
-        arOverlay.style.display = 'none';
-        modelViewer.style.display = 'block';
-        canvas.style.display = 'none';
       }
-    }
 
-    // Your AR button logic
-    let arJustStarted = false;
-    let arTimeout = null;
-
-    arButton.addEventListener('click', (event) => {
-      if (!arJustStarted) {
-        event.preventDefault();
-        event.stopPropagation();
-
-        arOverlay.style.display = 'flex';
-        arJustStarted = true;
-
-        arTimeout = setTimeout(() => {
-          startARWithThreeJS();
-          arJustStarted = false;
-        }, 1500); // shorter timeout for demo
+      function render() {
+        renderer.render(scene, camera);
       }
-    });
-
-    arOverlay.addEventListener('click', () => {
-      if (arJustStarted) {
-        clearTimeout(arTimeout);
-        startARWithThreeJS();
-        arJustStarted = false;
-      }
-    });
-
-  </script>
-
-  <!-- Your other scripts (for specs, UI, etc.) remain unchanged -->
-
-</body>
+    </script>
+  </body>
 </html>
