@@ -51,7 +51,7 @@
 
         // Load Model
         const loader = new GLTFLoader();
-        loader.load('models/model1.glb', function (gltf) {
+        loader.load("models/model1.usdz", function (gltf) {
           const model = gltf.scene;
           model.scale.set(0.2, 0.2, 0.2); // Adjust scale if needed
           model.position.set(0, 0, -0.5); // Half meter in front
