@@ -1,32 +1,200 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>USDZ AR Viewer</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    body {
-      margin: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      background: #000;
-    }
-    a {
-      display: inline-block;
-      padding: 16px 24px;
-      font-size: 18px;
-      background: #007aff;
-      color: #fff;
-      border-radius: 8px;
-      text-decoration: none;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Simple Three.js WebXR AR (GLB)</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <a rel="ar" href="model1.usdz" download="model1.usdz">
-    View in AR
-  </a>
+    <div id="info">
+        <h1>Three.js WebXR AR</h1>
+        <p>This is a simple markerless AR example.</p>
+        <p>On supported devices, tap "Start AR" and point your camera at a flat surface.</p>
+        <button id="arButton" disabled>Loading AR...</button>
+        <p id="status">Waiting for 3D model to load and AR compatibility check...</p>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'https://unpkg.com/three@0.165.0/build/three.module.js';
+        import { GLTFLoader } from 'https://unpkg.com/three@0.165.0/examples/jsm/loaders/GLTFLoader.js';
+        import { ARButton } from 'https://unpkg.com/three@0.165.0/examples/jsm/webxr/ARButton.js';
+
+        let camera, scene, renderer;
+        let controller; // To capture user taps
+        let reticle;    // The ring to indicate a detected surface
+        let loadedModel; // The GLB model itself
+
+        let hitTestSource = null;
+        let hitTestSourceRequested = false;
+
+        const container = document.body; // Render directly into the body for full screen
+        const arButton = document.getElementById('arButton');
+        const statusText = document.getElementById('status');
+        const infoDiv = document.getElementById('info');
+
+        init();
+        animate();
+
+        function init() {
+            scene = new THREE.Scene();
+
+            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.xr.enabled = true; // Crucial: Enable WebXR for the renderer
+            container.appendChild(renderer.domElement);
+
+            // Add some basic lighting
+            const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 3);
+            light.position.set(0.5, 1, 0.25);
+            scene.add(light);
+
+            // Create the reticle (the little ring that helps place objects)
+            reticle = new THREE.Mesh(
+                new THREE.RingGeometry(0.08, 0.12, 32).rotateX(-Math.PI / 2),
+                new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 })
+            );
+            reticle.matrixAutoUpdate = false; // We'll manually update its position from hit-test results
+            reticle.visible = false;
+            scene.add(reticle);
+
+            // Load the GLB model
+            const loader = new GLTFLoader();
+            loader.load('models/model1.glb', function (gltf) {
+                loadedModel = gltf.scene;
+                // Adjust scale of the model. This is very important and often needs tuning!
+                // 0.1 means 10% of its original size.
+                loadedModel.scale.set(0.1, 0.1, 0.1); 
+                loadedModel.visible = false; // Hide until placed
+
+                // Find and play animations if present
+                if (gltf.animations && gltf.animations.length) {
+                    const mixer = new THREE.AnimationMixer(loadedModel);
+                    gltf.animations.forEach((clip) => {
+                        mixer.clipAction(clip).play();
+                    });
+                    // Store mixer to update it in the render loop
+                    loadedModel.mixer = mixer; 
+                }
+
+                arButton.textContent = 'START AR';
+                arButton.disabled = false;
+                statusText.textContent = 'Model loaded. Tap "START AR" and point camera at a flat surface.';
+
+            }, undefined, function (error) {
+                console.error('Error loading GLB model:', error);
+                statusText.textContent = 'Error loading 3D model.';
+                arButton.disabled = true;
+            });
+
+            // AR Button setup from Three.js examples (handles WebXR session request)
+            const button = ARButton.createButton(renderer, { 
+                requiredFeatures: ['hit-test'],
+                // optionalFeatures: ['dom-overlay'], // Uncomment if you want DOM elements over AR (more advanced)
+                // domOverlay: { root: infoDiv } // If using dom-overlay, specify your overlay div
+            });
+            arButton.parentNode.replaceChild(button, arButton); // Replace our placeholder button with the Three.js one
+
+            // Controller for user interaction (tap to place model)
+            controller = renderer.xr.getController(0);
+            controller.addEventListener('select', onSelect);
+            scene.add(controller);
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function onSelect() {
+            if (reticle.visible && loadedModel) {
+                // Clone the model so you can place multiple instances if desired
+                const placedInstance = loadedModel.clone(); 
+                
+                // Position the model at the reticle's location
+                placedInstance.position.setFromMatrixPosition(reticle.matrix);
+                
+                // Orient the model to face the camera or align with the surface
+                // A common approach is to copy the reticle's quaternion
+                placedInstance.quaternion.setFromRotationMatrix(reticle.matrix);
+
+                placedInstance.visible = true; // Make it visible now
+
+                scene.add(placedInstance);
+                statusText.textContent = 'Model placed! Tap again to place another.';
+
+                // If the model has animations and a mixer, clone the mixer as well
+                if (loadedModel.mixer) {
+                    placedInstance.mixer = new THREE.AnimationMixer(placedInstance);
+                    loadedModel.animations.forEach((clip) => {
+                        placedInstance.mixer.clipAction(clip).play();
+                    });
+                }
+
+            } else {
+                statusText.textContent = 'Move your device to find a surface to place the model.';
+            }
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            // renderer.setAnimationLoop calls render() automatically for WebXR
+            // We set this up once in init() or after session starts
+        }
+
+        function render(timestamp, frame) {
+            const delta = 0; // Or use a Clock for precise animation timing
+            if (loadedModel && loadedModel.mixer) {
+                // Update animations for all placed instances
+                scene.traverse(obj => {
+                    if (obj.mixer) {
+                        obj.mixer.update(delta);
+                    }
+                });
+            }
+
+            if (frame) {
+                const referenceSpace = renderer.xr.getReferenceSpace();
+                const session = renderer.xr.getSession();
+
+                // Request hit test source once per session
+                if (!hitTestSourceRequested) {
+                    session.requestHitTestSource({ space: referenceSpace }).then(function (source) {
+                        hitTestSource = source;
+                    });
+                    session.addEventListener('end', function () { // Clean up on session end
+                        hitTestSourceRequested = false;
+                        hitTestSource = null;
+                        infoDiv.style.display = 'block'; // Show info again
+                        statusText.textContent = 'AR session ended. Reload to try again.';
+                    });
+                    hitTestSourceRequested = true;
+                    infoDiv.style.display = 'none'; // Hide info UI when AR starts
+                }
+
+                // Get hit test results to position the reticle
+                if (hitTestSource) {
+                    const hitTestResults = frame.getHitTestResults(hitTestSource);
+
+                    if (hitTestResults.length) {
+                        const hit = hitTestResults[0];
+                        reticle.visible = true;
+                        reticle.matrix.fromArray(hit.transform.matrix); // Update reticle's position/orientation
+                        statusText.textContent = 'Tap screen to place model.';
+                    } else {
+                        reticle.visible = false;
+                        statusText.textContent = 'Move device to find a surface.';
+                    }
+                }
+            }
+
+            renderer.render(scene, camera);
+        }
+    </script>
 </body>
 </html>
