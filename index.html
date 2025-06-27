@@ -1,142 +1,16 @@
+
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Three.js AR with Gestures</title>
-  <style>
-    body { margin: 0; overflow: hidden; }
-    canvas { display: block; }
-  </style>
-</head>
-<body>
-  <script type="module">
-    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
-    import { ARButton } from 'https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/webxr/ARButton.js';
-    import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/loaders/GLTFLoader.js';
-
-    let camera, scene, renderer;
-    let controller, reticle, glbModel;
-    let selectedModel = null;
-    let hitTestSource = null;
-    let hitTestSourceRequested = false;
-    let initialDistance = null;
-    let initialScale = 1;
-    let initialRotation = null;
-
-    const modelUrl = new URLSearchParams(window.location.search).get('model') || 'https://modelviewer.dev/shared-assets/models/Astronaut.glb';
-
-    scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera();
-
-    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.xr.enabled = true;
-    document.body.appendChild(renderer.domElement);
-
-    document.body.appendChild(ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] }));
-
-    const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
-    scene.add(light);
-
-    const ringGeo = new THREE.RingGeometry(0.1, 0.12, 32).rotateX(-Math.PI / 2);
-    const ringMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
-    reticle = new THREE.Mesh(ringGeo, ringMat);
-    reticle.matrixAutoUpdate = false;
-    reticle.visible = false;
-    scene.add(reticle);
-
-    const loader = new GLTFLoader();
-    loader.load(modelUrl, gltf => {
-      glbModel = gltf.scene;
-    });
-
-    controller = renderer.xr.getController(0);
-    controller.addEventListener('select', () => {
-      if (reticle.visible && glbModel) {
-        const clone = glbModel.clone();
-        clone.position.setFromMatrixPosition(reticle.matrix);
-        clone.quaternion.setFromRotationMatrix(reticle.matrix);
-        scene.add(clone);
-        selectedModel = clone;
-        initialScale = 1;
-      }
-    });
-    scene.add(controller);
-
-    renderer.setAnimationLoop((timestamp, frame) => {
-      if (frame) {
-        const refSpace = renderer.xr.getReferenceSpace();
-        const session = renderer.xr.getSession();
-
-        if (!hitTestSourceRequested) {
-          session.requestReferenceSpace('viewer').then(space => {
-            session.requestHitTestSource({ space }).then(source => {
-              hitTestSource = source;
-            });
-          });
-
-          session.addEventListener('end', () => {
-            hitTestSourceRequested = false;
-            hitTestSource = null;
-          });
-
-          hitTestSourceRequested = true;
-        }
-
-        if (hitTestSource) {
-          const hits = frame.getHitTestResults(hitTestSource);
-          if (hits.length) {
-            const hit = hits[0];
-            const pose = hit.getPose(refSpace);
-            reticle.visible = true;
-            reticle.matrix.fromArray(pose.transform.matrix);
-          } else {
-            reticle.visible = false;
-          }
-        }
-      }
-
-      renderer.render(scene, camera);
-    });
-
-    function getDistance(t1, t2) {
-      const dx = t1.clientX - t2.clientX;
-      const dy = t1.clientY - t2.clientY;
-      return Math.sqrt(dx * dx + dy * dy);
-    }
-
-    function getAngle(t1, t2) {
-      return Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX);
-    }
-
-    renderer.domElement.addEventListener('touchstart', (event) => {
-      if (event.touches.length === 2) {
-        initialDistance = getDistance(event.touches[0], event.touches[1]);
-        initialRotation = getAngle(event.touches[0], event.touches[1]);
-      }
-    }, false);
-
-    renderer.domElement.addEventListener('touchmove', (event) => {
-      if (!selectedModel || event.touches.length !== 2) return;
-
-      const newDistance = getDistance(event.touches[0], event.touches[1]);
-      const scaleFactor = newDistance / initialDistance;
-      selectedModel.scale.setScalar(initialScale * scaleFactor);
-
-      const newRotation = getAngle(event.touches[0], event.touches[1]);
-      const rotationDelta = newRotation - initialRotation;
-      selectedModel.rotation.y += rotationDelta;
-      initialRotation = newRotation;
-
-      event.preventDefault();
-    }, { passive: false });
-
-    renderer.domElement.addEventListener('touchend', (event) => {
-      if (selectedModel) {
-        initialScale = selectedModel.scale.x;
-      }
-    }, false);
-  </script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>three.js bare example</title>
+    <style></style>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <button>Start AR</button>
+    <script src="./index.js"></script>
+  </body>
 </html>
