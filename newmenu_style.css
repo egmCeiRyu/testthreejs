@@ -11,7 +11,6 @@
 
     .label {
       color: #ffffff;
-      font-weight: bold;
       font-family: 'Roboto', sans-serif;
       margin-top: 7px;
       display: inline-block;
@@ -54,9 +53,6 @@
         margin: 0 auto;
     }
 
-    .thumbnail-img:hover {
-        transform: scale(1.05);
-    }
         
     .thumbnail-link {
       cursor: pointer;
@@ -134,4 +130,18 @@
         grid-template-columns: repeat(2, 1fr); /* always 2 columns */
         width: 76%;
       }
+      
+      .companylogo{
+        height: 64px;
+        padding-top: 5px;
+      }
+      
+      .hosokawalogo{
+        padding-top: 0px;
+        padding-bottom: 1px;
+        height: 31px;
+        margin: auto;
+        padding-right: 83px;
+      }
+      
     }

@@ -1,3 +1,8 @@
+    model-viewer[ar] button[aria-label="Take picture"],
+    model-viewer[ar] button[title="Take picture"] {
+      display: none !important;
+    }
+
 /* === Base Styles === */
     body {
       margin: 0;

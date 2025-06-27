@@ -2,67 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>3D Model Viewer with Measurement and Custom AR</title>
-
-  <!-- model-viewer -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3D Model Viewer</title>
   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
-
-  <style>
-    body, html {
-      margin: 0; padding: 0; height: 100%; overflow: hidden;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-    }
-    model-viewer {
-      width: 100%; height: 100vh; display: block;
-    }
-    #threejs-ar-container {
-      display: none; width: 100%; height: 100vh; position: absolute; top: 0; left: 0; z-index: 10;
-    }
-    #exit-ar-button {
-      position: fixed; top: 20px; left: 20px;
-      padding: 10px 15px;
-      background: rgba(0,0,0,0.7);
-      color: white;
-      border: none;
-      cursor: pointer;
-      display: none;
-      z-index: 15;
-      border-radius: 4px;
-    }
-    .dot {
-      width: 15px; height: 15px; border-radius: 50%;
-      background-color: black; opacity: 0.8;
-      border: 1px solid white;
-      cursor: default;
-    }
-    .dim {
-      background-color: rgba(255, 255, 255, 0.7);
-      padding: 2px 5px;
-      border-radius: 3px;
-      font-size: 14px;
-      user-select: none;
-    }
-    .dimensionLineContainer {
-      pointer-events: none;
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      overflow: visible;
-      z-index: 5;
-    }
-    .dimensionLine {
-      stroke: black;
-      stroke-width: 2;
-    }
-    .hide {
-      display: none;
-    }
-  </style>
+  <link rel="stylesheet" href="modelviewer_style.css">
+  <link rel="stylesheet" href="https://use.typekit.net/zfi8dmc.css"> 
 </head>
 
 <body>
-  <model-viewer
-    id="modelViewer"
+  <model-viewer ar id="modelViewer"
     shadow-intensity="1"
     shadow-softness="1"
     camera-controls
@@ -70,299 +18,450 @@
     camera-orbit="-25deg 75deg auto"
     scale="1 1 1"
     orbit-sensitivity="2"
-    ar-modes="webxr scene-viewer quick-look"
-    src=""
-  >
-    <!-- Measurement hotspots -->
-    <button slot="hotspot-dot+X-Y+Z" class="dot" data-position="1 -1 1" data-normal="1 0 0"></button>
-    <button slot="hotspot-dim+X-Y" class="dim" data-position="1 -1 0" data-normal="1 0 0"></button>
-    <button slot="hotspot-dot+X-Y-Z" class="dot" data-position="1 -1 -1" data-normal="1 0 0"></button>
-    <button slot="hotspot-dim+X-Z" class="dim" data-position="1 0 -1" data-normal="1 0 0"></button>
-    <button slot="hotspot-dot+X+Y-Z" class="dot" data-position="1 1 -1" data-normal="0 1 0"></button>
-    <button slot="hotspot-dim+Y-Z" class="dim" data-position="0 -1 -1" data-normal="0 1 0"></button>
-    <button slot="hotspot-dot-X+Y-Z" class="dot" data-position="-1 1 -1" data-normal="0 1 0"></button>
-    <button slot="hotspot-dim-X-Z" class="dim" data-position="-1 0 -1" data-normal="-1 0 0"></button>
-    <button slot="hotspot-dot-X-Y-Z" class="dot" data-position="-1 -1 -1" data-normal="-1 0 0"></button>
-    <button slot="hotspot-dim-X-Y" class="dim" data-position="-1 -1 0" data-normal="-1 0 0"></button>
-    <button slot="hotspot-dot-X-Y+Z" class="dot" data-position="-1 -1 1" data-normal="-1 0 0"></button>
+    ar-modes="webxr scene-viewer quick-look">
 
-    <svg id="dimLines" width="100%" height="100%" class="dimensionLineContainer" pointer-events="none" >
-      <line class="dimensionLine"></line>
-      <line class="dimensionLine"></line>
-      <line class="dimensionLine"></line>
-      <line class="dimensionLine"></line>
-      <line class="dimensionLine"></line>
-    </svg>
+                    <button style="background-color:rgb(0,0,0)" slot="hotspot-dot+X-Y+Z" class="dot" data-position="1 -1 1" data-normal="1 0 0"></button>
+                    <button slot="hotspot-dim+X-Y" class="dim" data-position="1 -1 0" data-normal="1 0 0"></button>
+                    <button style="background-color:rgb(0,0,0)" slot="hotspot-dot+X-Y-Z" class="dot" data-position="1 -1 -1" data-normal="1 0 0"></button>
+                    <button slot="hotspot-dim+X-Z" class="dim" data-position="1 0 -1" data-normal="1 0 0"></button>
+                    <button style="background-color:rgb(0,0,0)" slot="hotspot-dot+X+Y-Z" class="dot" data-position="1 1 -1" data-normal="0 1 0"></button>
+                    <button slot="hotspot-dim+Y-Z" class="dim" data-position="0 -1 -1" data-normal="0 1 0"></button>
+                    <button style="background-color:rgb(0,0,0)" slot="hotspot-dot-X+Y-Z" class="dot" data-position="-1 1 -1" data-normal="0 1 0"></button>
+                    <button slot="hotspot-dim-X-Z" class="dim" data-position="-1 0 -1" data-normal="-1 0 0"></button>
+                    <button style="background-color:rgb(0,0,0)" slot="hotspot-dot-X-Y-Z" class="dot" data-position="-1 -1 -1" data-normal="-1 0 0"></button>
+                    <button slot="hotspot-dim-X-Y" class="dim" data-position="-1 -1 0" data-normal="-1 0 0"></button>
+                    <button style="background-color:rgb(0,0,0)" slot="hotspot-dot-X-Y+Z" class="dot" data-position="-1 -1 1" data-normal="-1 0 0"></button>
+                    <svg id="dimLines" width="100%" height="100%" class="dimensionLineContainer">
+                      <line class="dimensionLine"></line>
+                      <line class="dimensionLine"></line>
+                      <line class="dimensionLine"></line>
+                      <line class="dimensionLine"></line>
+                      <line class="dimensionLine"></line>
+                    </svg>
+      <!-- Botão voltar -->
+      <img id="ar-button" src="icon/arbtn.png" slot="ar-button" alt="arbtn">
+      <!--
+      <div id="controls" class="dim glass">
+        <label for="show-dimensions">寸法を示す：</label>
+        <input id="show-dimensions" type="checkbox" checked="true">
+      </div>
+      -->
+    </model-viewer>
+    <div id="buttonsGRP">
+      <a href="newMenu.html">
+        <img class="return" src="icon/returnbtn.png" alt="return">
+      </a>
 
-    <button slot="ar-button" id="custom-ar-button" style="background-color: black; color: white;">
-      Enter AR (Custom)
-    </button>
-  </model-viewer>
+      <!-- Botão especificações -->
+      <img class="specification" src="icon/infobtn.png" alt="specification" id="specButton">  
+    </div>
+  
+    <div id="arOverlay" class="ar-overlay">
+      <div class="loadingText">
+         <img src="icon/explanation.png">
+      </div>
+    </div>
 
-  <div id="threejs-ar-container"></div>
-  <button id="exit-ar-button">Exit AR</button>
+    <!-- Sobreposição de especificações -->
+    <div class="spec-overlay" id="specOverlay">
+      <h2>製品仕様</h2>
+      
+      <p>・概要 逆円錐型のケーシング内で回転するパドルによって 粉体に強力な衝撃・せん断力を与え、攪拌・分散し、
+        精密混合を行うバッチ式の高速せん断型混合機です。  ・特長 短い時間で均一な混合が可能</p>
 
-  <script type="module">
-    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.153.0/build/three.module.js';
-    import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.153.0/examples/jsm/loaders/GLTFLoader.js';
+      <a id="modelLink" href="#" target="_blank">製品仕様</a> 
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const modelUrl = urlParams.get('model');
-    const modelViewer = document.getElementById('modelViewer');
-    const arButton = document.getElementById('custom-ar-button');
-    const arContainer = document.getElementById('threejs-ar-container');
-    const exitArBtn = document.getElementById('exit-ar-button');
+        <div id="iframeWrapper">
+          <button id="closeIframeBtn">
+            ×
+          </button>
 
-    // Set model-viewer src from URL
-    if (modelUrl) {
-      modelViewer.setAttribute('src', modelUrl);
-    } else {
-      console.warn('No model URL provided in query parameters.');
-    }
+          <iframe  title="model"
+                  id="modelIframe">
+          </iframe>
 
-    // Measurement functions
-    const dimLines = modelViewer.querySelectorAll('line');
+        </div>
+      
+      <img src="icon/returnbtn.png" class="close-spec" id="closeSpec">
+    
+    </div>
+  
+    <script type="module">
+      const urlParams = new URLSearchParams(window.location.search);
+      const modelUrl = urlParams.get('model');
+      const modelViewer = document.getElementById('modelViewer');
+      //const checkbox = modelViewer.querySelector('#show-dimensions');
+//
+      //function setVisibility(visible) {
+      //  dimElements.forEach((element) => {
+      //    if (visible) {
+      //      element.classList.remove('hide');
+      //    } else {
+      //      element.classList.add('hide');
+      //    }
+      //  });
+    //}
+//
+      //checkbox.addEventListener('change', () => {
+      //  setVisibility(checkbox.checked);
+      //});
 
-    function drawLine(svgLine, dot1, dot2, dimensionHotspot) {
-      if (dot1 && dot2) {
-        svgLine.setAttribute('x1', dot1.canvasPosition.x);
-        svgLine.setAttribute('y1', dot1.canvasPosition.y);
-        svgLine.setAttribute('x2', dot2.canvasPosition.x);
-        svgLine.setAttribute('y2', dot2.canvasPosition.y);
 
-        if (dimensionHotspot && !dimensionHotspot.facingCamera) {
-          svgLine.classList.add('hide');
-        } else {
-          svgLine.classList.remove('hide');
-        }
+      if (modelUrl) {
+        modelViewer.setAttribute('src', modelUrl);
       }
-    }
 
-    function renderSVG() {
-      drawLine(dimLines[0], modelViewer.queryHotspot('hotspot-dot+X-Y+Z'), modelViewer.queryHotspot('hotspot-dot+X-Y-Z'), modelViewer.queryHotspot('hotspot-dim+X-Y'));
-      drawLine(dimLines[1], modelViewer.queryHotspot('hotspot-dot+X-Y-Z'), modelViewer.queryHotspot('hotspot-dot+X+Y-Z'), modelViewer.queryHotspot('hotspot-dim+X-Z'));
-      drawLine(dimLines[2], modelViewer.queryHotspot('hotspot-dot+X+Y-Z'), modelViewer.queryHotspot('hotspot-dot-X+Y-Z'));
-      drawLine(dimLines[3], modelViewer.queryHotspot('hotspot-dot-X+Y-Z'), modelViewer.queryHotspot('hotspot-dot-X-Y-Z'), modelViewer.queryHotspot('hotspot-dim-X-Z'));
-      drawLine(dimLines[4], modelViewer.queryHotspot('hotspot-dot-X-Y-Z'), modelViewer.queryHotspot('hotspot-dot-X-Y+Z'), modelViewer.queryHotspot('hotspot-dim-X-Y'));
-    }
-
-    modelViewer.addEventListener('load', () => {
-      const center = modelViewer.getBoundingBoxCenter();
-      const size = modelViewer.getDimensions();
-
-      const x2 = size.x / 2;
-      const y2 = size.y / 2;
-      const z2 = size.z / 2;
-
-      modelViewer.updateHotspot({
-        name: 'hotspot-dot+X-Y+Z',
-        position: `${center.x + x2} ${center.y - y2} ${center.z + z2}`
-      });
-      modelViewer.updateHotspot({
-        name: 'hotspot-dim+X-Y',
-        position: `${center.x + x2 * 1.2} ${center.y - y2 * 1.1} ${center.z}`
-      });
-      modelViewer.querySelector('button[slot="hotspot-dim+X-Y"]').textContent = `${(size.z).toFixed(1)} m`;
-
-      modelViewer.updateHotspot({
-        name: 'hotspot-dot+X-Y-Z',
-        position: `${center.x + x2} ${center.y - y2} ${center.z - z2}`
-      });
-      modelViewer.updateHotspot({
-        name: 'hotspot-dim+X-Z',
-        position: `${center.x + x2 * 1.2} ${center.y} ${center.z - z2 * 1.2}`
-      });
-      modelViewer.querySelector('button[slot="hotspot-dim+X-Z"]').textContent = `${(size.y).toFixed(1)} m`;
-
-      modelViewer.updateHotspot({
-        name: 'hotspot-dot+X+Y-Z',
-        position: `${center.x + x2} ${center.y + y2} ${center.z - z2}`
-      });
-      modelViewer.updateHotspot({
-        name: 'hotspot-dim+Y-Z',
-        position: `${center.x} ${center.y + y2 * 1.1} ${center.z - z2 * 1.1}`
-      });
-      modelViewer.querySelector('button[slot="hotspot-dim+Y-Z"]').textContent = `${(size.x).toFixed(1)} m`;
-
-      modelViewer.updateHotspot({
-        name: 'hotspot-dot-X+Y-Z',
-        position: `${center.x - x2} ${center.y + y2} ${center.z - z2}`
-      });
-      modelViewer.updateHotspot({
-        name: 'hotspot-dim-X-Z',
-        position: `${center.x - x2 * 1.2} ${center.y} ${center.z - z2 * 1.2}`
-      });
-      modelViewer.querySelector('button[slot="hotspot-dim-X-Z"]').textContent = `${(size.y).toFixed(1)} m`;
-
-      modelViewer.updateHotspot({
-        name: 'hotspot-dot-X-Y-Z',
-        position: `${center.x - x2} ${center.y - y2} ${center.z - z2}`
-      });
-      modelViewer.updateHotspot({
-        name: 'hotspot-dim-X-Y',
-        position: `${center.x - x2 * 1.2} ${center.y - y2 * 1.1} ${center.z}`
-      });
-      modelViewer.querySelector('button[slot="hotspot-dim-X-Y"]').textContent = `${(size.z).toFixed(1)} m`;
-
-      modelViewer.updateHotspot({
-        name: 'hotspot-dot-X-Y+Z',
-        position: `${center.x - x2} ${center.y - y2} ${center.z + z2}`
-      });
-
-      renderSVG();
-    });
-
-    modelViewer.addEventListener('camera-change', renderSVG);
-
-    // --- Three.js AR setup ---
-
-    let camera, scene, renderer, controller;
-    let reticle;
-    let model;
-    let hitTestSource = null;
-    let hitTestSourceRequested = false;
-
-    function initThreeJsAR() {
-      scene = new THREE.Scene();
-
-      camera = new THREE.PerspectiveCamera(
-        70,
-        window.innerWidth / window.innerHeight,
-        0.01,
-        20
-      );
-
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.xr.enabled = true;
-      arContainer.appendChild(renderer.domElement);
-
-      const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
-      light.position.set(0.5, 1, 0.25);
-      scene.add(light);
-
-      const geometry = new THREE.RingGeometry(0.15, 0.2, 32).rotateX(- Math.PI / 2);
-      const material = new THREE.MeshBasicMaterial({ color: 0x0fff00 });
-      reticle = new THREE.Mesh(geometry, material);
-      reticle.matrixAutoUpdate = false;
-      reticle.visible = false;
-      scene.add(reticle);
-
-      const loader = new GLTFLoader();
-      loader.load(
-        modelUrl,
-        (gltf) => {
-          model = gltf.scene;
-          model.scale.set(0.5, 0.5, 0.5);
-          model.visible = false;
-          scene.add(model);
+      // === ESPECIFICAÇÕES POR MODELO ===
+      const modelSpecs = {
+        model1: {
+          title: "Model1",
+          description: "木製フレームと布張りの座面を備えたモダンなデザインの椅子。軽量で耐久性があります。",
+          //link:"https://www.hosokawamicron.co.jp/en/product/machines/detail/167.html?page=1",
         },
-        undefined,
-        (error) => {
-          console.error('Error loading model for AR:', error);
+        model2: {
+          title: "Model2",
+          description: "最大6人まで対応可能。ガラス天板と金属脚を備えたスタイリッシュなダイニングテーブル。",
+          //link:"https://www.hosokawamicron.co.jp/en/product/machines/detail/168.html?page=1",
+        },
+        model3: {
+          title: "Model3",
+          description: "LEDライト内蔵のモダンな天井ランプ。省エネで温かい光を提供します。",
+          //link:"https://www.hosokawamicron.co.jp/en/product/machines/detail/169.html?page=1",
+        },
+        model4: {
+          title: "Model4",
+          description: "LEDライト内蔵のモダンな天井ランプ。省エネで温かい光を提供します。",
+          //link:"https://www.hosokawamicron.co.jp/en/product/machines/detail/170.html?page=1",
+        },
+        model5: {
+          title: "Model5",
+          description: "LEDライト内蔵のモダンな天井ランプ。省エネで温かい光を提供します。",
+          //link:"https://www.hosokawamicron.co.jp/en/product/machines/detail/171.html?page=1",
+        },
+        model6: {
+          title: "Model6",
+          description: "LEDライト内蔵のモダンな天井ランプ。省エネで温かい光を提供します。",
+          //link:"https://www.hosokawamicron.co.jp/en/product/machines/detail/172.html?page=1",
+        },
+        model7: {
+          title: "Model7",
+          description: "LEDライト内蔵のモダンな天井ランプ。省エネで温かい光を提供します。",
+          //link:"https://www.hosokawamicron.co.jp/en/product/machines/detail/173.html?page=1",
+        },
+        model8: {
+          title: "Model8",
+          description: "LEDライト内蔵のモダンな天井ランプ。省エネで温かい光を提供します。",
+          //link:"https://www.hosokawamicron.co.jp/en/product/machines/detail/174.html?page=1",
+        },
+        model9: {
+          title: "Model9",
+          description: "LEDライト内蔵のモダンな天井ランプ。省エネで温かい光を提供します。",
+          //link:"https://www.hosokawamicron.co.jp/en/product/machines/detail/175.html?page=1",
+        },
+        model10: {
+          title: "Model10",
+          description: "LEDライト内蔵のモダンな天井ランプ。省エネで温かい光を提供します。",
+          //link:"https://www.hosokawamicron.co.jp/en/product/machines/detail/176.html?page=1",
+        },
+        // Adicione mais conforme necessário
+      };
+
+      const specButton = document.getElementById('specButton');
+      const specOverlay = document.getElementById('specOverlay');
+      const closeSpec = document.getElementById('closeSpec');
+
+      // Obter nome base do modelo (ex: chair.glb -> chair)
+      let modelKey = "";
+      if (modelUrl) {
+        modelKey = modelUrl.split('/').pop().split('.')[0]; // 'chair.glb' → 'chair'
+
+      if (modelSpecs[modelKey]) {
+        const spec = modelSpecs[modelKey];
+        specOverlay.querySelector('h2').textContent = spec.title;
+        specOverlay.querySelector('p').textContent = spec.description;
+
+      const modelLink = document.getElementById('modelLink');
+      const iframeWrapper = document.getElementById('iframeWrapper');
+      const modelIframe = document.getElementById('modelIframe');
+
+    // Define o comportamento do link e iframe
+    if (spec.link) {
+      modelLink.style.display = 'inline';
+
+      modelLink.onclick = (e) => {
+        e.preventDefault(); // Impede abrir nova aba
+        modelIframe.src = spec.link;
+        iframeWrapper.style.display = 'block';
+      };
+    } else {
+      modelLink.style.display = 'none';
+      iframeWrapper.style.display = 'none';
+    }
+        } else {
+          specOverlay.querySelector('h2').textContent = "仕様情報がありません";
+          specOverlay.querySelector('p').textContent = "このモデルの仕様はまだ登録されていません。";
+          document.getElementById('modelLink').style.display = 'none';
         }
-      );
-
-      controller = renderer.xr.getController(0);
-      controller.addEventListener('select', onSelect);
-      scene.add(controller);
-
-      window.addEventListener('resize', onWindowResize);
-
-      renderer.setAnimationLoop(render);
-    }
-
-    function onWindowResize() {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    }
-
-    function onSelect() {
-      if (reticle.visible && model) {
-        model.position.setFromMatrixPosition(reticle.matrix);
-        model.visible = true;
-      }
-    }
-
-    function render(timestamp, frame) {
-      if (frame) {
-        const referenceSpace = renderer.xr.getReferenceSpace();
-        const session = renderer.xr.getSession();
-
-        if (!hitTestSourceRequested) {
-          session.requestReferenceSpace('viewer').then((refSpace) => {
-            session.requestHitTestSource({ space: refSpace }).then((source) => {
-              hitTestSource = source;
-            });
-          });
-          session.addEventListener('end', () => {
-            hitTestSourceRequested = false;
-            hitTestSource = null;
-          });
-          hitTestSourceRequested = true;
-        }
-
-        if (hitTestSource) {
-          const hitTestResults = frame.getHitTestResults(hitTestSource);
-
-          if (hitTestResults.length) {
-            const hit = hitTestResults[0];
-            const pose = hit.getPose(referenceSpace);
-            reticle.visible = true;
-            reticle.matrix.fromArray(pose.transform.matrix);
-          } else {
-            reticle.visible = false;
-          }
-        }
       }
 
-      renderer.render(scene, camera);
-    }
+      const closeIframeBtn = document.getElementById('closeIframeBtn');
+      const iframeWrapper = document.getElementById('iframeWrapper');
 
-    function startThreeJsAR() {
-      modelViewer.style.display = 'none';
-      arContainer.style.display = 'block';
-      exitArBtn.style.display = 'block';
+    closeIframeBtn.addEventListener('click', () => {
+      iframeWrapper.style.display = 'none';
+      const iframe = document.getElementById('modelIframe');
+      iframe.src = ''; // Optional: stop loading
+    });
 
-      if (!renderer) {
-        initThreeJsAR();
-      }
-
-      navigator.xr.requestSession('immersive-ar', {
-        requiredFeatures: ['hit-test']
-      }).then((session) => {
-        renderer.xr.setSession(session);
-      }).catch(err => {
-        alert('Failed to start AR session: ' + err.message);
-        exitThreeJsAR();
+      specButton.addEventListener('click', () => {
+        specOverlay.style.display = 'flex';
       });
-    }
 
-    function exitThreeJsAR() {
-      if (renderer && renderer.xr.getSession()) {
-        renderer.xr.getSession().end();
-      }
-      arContainer.style.display = 'none';
-      exitArBtn.style.display = 'none';
-      modelViewer.style.display = 'block';
-    }
+      closeSpec.addEventListener('click', () => {
+        specOverlay.style.display = 'none';
+      });
 
-    arButton.addEventListener('click', () => {
-      if (navigator.xr && navigator.xr.isSessionSupported) {
-        navigator.xr.isSessionSupported('immersive-ar').then((supported) => {
-          if (supported) {
-            startThreeJsAR();
-          } else {
-            alert('AR not supported on this device/browser.');
+      modelViewer.addEventListener('load', () => {
+        const scene = modelViewer.scene;
+        const light = scene.shadowLight;
+        light.direction.set(0.5, -1, 0.5);
+      });
+
+      const dimElements = [...modelViewer.querySelectorAll('button'), modelViewer.querySelector('#dimLines')];
+
+        // update svg
+        function drawLine(svgLine, dotHotspot1, dotHotspot2, dimensionHotspot) {
+          if (dotHotspot1 && dotHotspot2) {
+            svgLine.setAttribute('x1', dotHotspot1.canvasPosition.x);
+            svgLine.setAttribute('y1', dotHotspot1.canvasPosition.y);
+            svgLine.setAttribute('x2', dotHotspot2.canvasPosition.x);
+            svgLine.setAttribute('y2', dotHotspot2.canvasPosition.y);
+
+            // use provided optional hotspot to tie visibility of this svg line to
+            if (dimensionHotspot && !dimensionHotspot.facingCamera) {
+              svgLine.classList.add('hide');
+            }
+            else {
+              svgLine.classList.remove('hide');
+            }
           }
+        }
+
+        const dimLines = modelViewer.querySelectorAll('line');
+
+        const renderSVG = () => {
+          drawLine(dimLines[0], modelViewer.queryHotspot('hotspot-dot+X-Y+Z'), modelViewer.queryHotspot('hotspot-dot+X-Y-Z'), modelViewer.queryHotspot('hotspot-dim+X-Y'));
+          drawLine(dimLines[1], modelViewer.queryHotspot('hotspot-dot+X-Y-Z'), modelViewer.queryHotspot('hotspot-dot+X+Y-Z'), modelViewer.queryHotspot('hotspot-dim+X-Z'));
+          drawLine(dimLines[2], modelViewer.queryHotspot('hotspot-dot+X+Y-Z'), modelViewer.queryHotspot('hotspot-dot-X+Y-Z')); // always visible
+          drawLine(dimLines[3], modelViewer.queryHotspot('hotspot-dot-X+Y-Z'), modelViewer.queryHotspot('hotspot-dot-X-Y-Z'), modelViewer.queryHotspot('hotspot-dim-X-Z'));
+          drawLine(dimLines[4], modelViewer.queryHotspot('hotspot-dot-X-Y-Z'), modelViewer.queryHotspot('hotspot-dot-X-Y+Z'), modelViewer.queryHotspot('hotspot-dim-X-Y'));
+        };
+
+        modelViewer.addEventListener('load', () => {
+          const center = modelViewer.getBoundingBoxCenter();
+          const size = modelViewer.getDimensions();
+
+          const x2 = size.x / 2;
+          const y2 = size.y / 2;
+          const z2 = size.z / 2;
+
+       modelViewer.updateHotspot({
+         name: 'hotspot-dot+X-Y+Z',
+         position: `${center.x + x2} ${center.y - y2} ${center.z + z2}`
+       });
+
+       modelViewer.updateHotspot({
+         name: 'hotspot-dim+X-Y',
+         position: `${center.x + x2 * 1.2} ${center.y - y2 * 1.1} ${center.z}`
+       });
+       modelViewer.querySelector('button[slot="hotspot-dim+X-Y"]').textContent =
+         `${(size.z * 1.0).toFixed(1)} m`;
+
+       modelViewer.updateHotspot({
+         name: 'hotspot-dot+X-Y-Z',
+         position: `${center.x + x2} ${center.y - y2} ${center.z - z2}`
+       });
+
+        modelViewer.updateHotspot({
+          name: 'hotspot-dim+X-Z',
+          position: `${center.x + x2 * 1.2} ${center.y} ${center.z - z2 * 1.2}`
         });
+        modelViewer.querySelector('button[slot="hotspot-dim+X-Z"]').textContent =
+          `${(size.y * 1.0).toFixed(1)} m`;
+
+        modelViewer.updateHotspot({
+          name: 'hotspot-dot+X+Y-Z',
+          position: `${center.x + x2} ${center.y + y2} ${center.z - z2}`
+        });
+
+        modelViewer.updateHotspot({
+          name: 'hotspot-dim+Y-Z',
+          position: `${center.x} ${center.y + y2 * 1.1} ${center.z - z2 * 1.1}`
+        });
+        modelViewer.querySelector('button[slot="hotspot-dim+Y-Z"]').textContent =
+          `${(size.x * 1.0).toFixed(1)} m`;
+
+        modelViewer.updateHotspot({
+          name: 'hotspot-dot-X+Y-Z',
+          position: `${center.x - x2} ${center.y + y2} ${center.z - z2}`
+        });
+
+        modelViewer.updateHotspot({
+          name: 'hotspot-dim-X-Z',
+          position: `${center.x - x2 * 1.2} ${center.y} ${center.z - z2 * 1.2}`
+        });
+        modelViewer.querySelector('button[slot="hotspot-dim-X-Z"]').textContent =
+          `${(size.y * 1.0).toFixed(1)} m`;
+
+        modelViewer.updateHotspot({
+          name: 'hotspot-dot-X-Y-Z',
+          position: `${center.x - x2} ${center.y - y2} ${center.z - z2}`
+        });
+
+        modelViewer.updateHotspot({
+          name: 'hotspot-dim-X-Y',
+          position: `${center.x - x2 * 1.2} ${center.y - y2 * 1.1} ${center.z}`
+        });
+        modelViewer.querySelector('button[slot="hotspot-dim-X-Y"]').textContent =
+          `${(size.z * 1.0).toFixed(1)} m`;
+
+        modelViewer.updateHotspot({
+          name: 'hotspot-dot-X-Y+Z',
+          position: `${center.x - x2} ${center.y - y2} ${center.z + z2}`
+        });
+
+        renderSVG();
+
+        modelViewer.addEventListener('camera-change', renderSVG);
+      });
+
+        modelViewer.addEventListener('load', () => {
+          const size = modelViewer.getDimensions();
+          const maxDim = Math.max(size.x, size.y, size.z);
+          const suggestedDistance = maxDim * 10.5; // Ajuste o fator conforme necessário
+          modelViewer.cameraOrbit = `0deg 75deg ${suggestedDistance}m`;
+      });
+
+        modelViewer.addEventListener('fullscreenchange', () => {
+          const arButtons = modelViewer.shadowRoot?.querySelectorAll('button[slot="ar-button"]');
+          if (arButtons && arButtons.length > 1) {
+            for (let i = 1; i < arButtons.length; i++) {
+              arButtons[i].remove();
+          }
+        }
+      });
+
+        closeSpec.addEventListener('click', () => {
+        specOverlay.style.display = 'none';
+        iframeWrapper.style.display = 'none'; // Esconde iframe ao fechar
+        modelIframe.src = ""; // Limpa conteúdo do iframe
+      });
+
+    </script>
+
+
+    <script type="module">
+      const modelViewer = document.getElementById('modelViewer');
+      const arButton = document.querySelector('#ar-button'); // your visible AR button
+      const arOverlay = document.getElementById('arOverlay');
+
+      let arJustStarted = false;
+      let arTimeout = null;
+
+      function startAR() {
+        arOverlay.style.display = 'none';
+        arJustStarted = false;
+
+        // ✅ This is the correct way to trigger AR programmatically
+        modelViewer.activateAR();
+      }
+
+      // When the user taps the AR button
+      arButton.addEventListener('click', (event) => {
+        if (!arJustStarted) {
+          event.preventDefault();
+          event.stopPropagation();
+
+          arOverlay.style.display = 'flex';
+          arJustStarted = true;
+
+          arTimeout = setTimeout(() => {
+            startAR();
+          }, 5000);
+        }
+      });
+
+      // When the user taps the overlay
+      arOverlay.addEventListener('click', () => {
+        if (arJustStarted) {
+          clearTimeout(arTimeout);
+          startAR();
+        }
+      });
+
+      // When exiting AR mode
+      modelViewer.addEventListener('ar-status', (event) => {
+        if (event.detail.status === 'not-presenting') {
+          arOverlay.style.display = 'none';
+          arJustStarted = false;
+          clearTimeout(arTimeout);
+        }
+      });
+      
+       //// preventing to scroll
+      //document.body.addEventListener('touchmove', function (e) {
+      //e.preventDefault();
+      //}, { passive: false });
+  </script>
+  
+  <script type="module">
+  const modelViewer = document.getElementById('modelViewer');
+  const modelUrl = new URLSearchParams(window.location.search).get('model');
+  const modelKey = modelUrl ? modelUrl.split('/').pop().split('.')[0] : "";
+
+  const specButton = document.getElementById('specButton');
+  const specOverlay = document.getElementById('specOverlay');
+  const closeSpec = document.getElementById('closeSpec');
+  const modelLink = document.getElementById('modelLink');
+  const iframeWrapper = document.getElementById('iframeWrapper');
+  const modelIframe = document.getElementById('modelIframe');
+
+  fetch('modelSpecs.json')
+    .then(response => response.json())
+    .then(modelSpecs => {
+      if (modelKey && modelSpecs[modelKey]) {
+        const spec = modelSpecs[modelKey];
+        specOverlay.querySelector('h2').innerHTML = spec.title;
+        specOverlay.querySelector('p').innerHTML = spec.description;
+
+        if (spec.link) {
+          modelLink.style.display = 'inline';
+          modelLink.onclick = (e) => {
+            e.preventDefault();
+            modelIframe.src = spec.link;
+            iframeWrapper.style.display = 'block';
+          };
+        } else {
+          modelLink.style.display = 'none';
+        }
       } else {
-        alert('WebXR not available on this device/browser.');
+        specOverlay.querySelector('h2').textContent = "仕様情報がありません";
+        specOverlay.querySelector('p').textContent = "このモデルの仕様はまだ登録されていません。";
+        modelLink.style.display = 'none';
       }
     });
 
-    exitArBtn.addEventListener('click', exitThreeJsAR);
-  </script>
+  specButton.addEventListener('click', () => {
+    specOverlay.style.display = 'flex';
+  });
+
+  closeSpec.addEventListener('click', () => {
+    specOverlay.style.display = 'none';
+    iframeWrapper.style.display = 'none';
+    modelIframe.src = "";
+  });
+</script>
+  
 </body>
 </html>
+
