@@ -3,12 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Three.js AR</title>
+  <title>Three.js AR with Gestures</title>
   <style>
     body { margin: 0; overflow: hidden; }
     canvas { display: block; }
   </style>
-
 </head>
 <body>
   <script type="module">
@@ -17,9 +16,15 @@
     import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/loaders/GLTFLoader.js';
 
     let camera, scene, renderer;
-    let controller, reticle, model;
+    let controller, reticle, glbModel;
+    let selectedModel = null;
     let hitTestSource = null;
     let hitTestSourceRequested = false;
+    let initialDistance = null;
+    let initialScale = 1;
+    let initialRotation = null;
+
+    const modelUrl = new URLSearchParams(window.location.search).get('model') || 'https://modelviewer.dev/shared-assets/models/Astronaut.glb';
 
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera();
@@ -34,7 +39,7 @@
     const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
     scene.add(light);
 
-    const ringGeo = new THREE.RingGeometry(0.1, 0.11, 32).rotateX(-Math.PI / 2);
+    const ringGeo = new THREE.RingGeometry(0.1, 0.12, 32).rotateX(-Math.PI / 2);
     const ringMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
     reticle = new THREE.Mesh(ringGeo, ringMat);
     reticle.matrixAutoUpdate = false;
@@ -42,17 +47,19 @@
     scene.add(reticle);
 
     const loader = new GLTFLoader();
-    loader.load('https://modelviewer.dev/shared-assets/models/Astronaut.glb', gltf => {
-      model = gltf.scene;
+    loader.load(modelUrl, gltf => {
+      glbModel = gltf.scene;
     });
 
     controller = renderer.xr.getController(0);
     controller.addEventListener('select', () => {
-      if (reticle.visible && model) {
-        const placed = model.clone();
-        placed.position.setFromMatrixPosition(reticle.matrix);
-        placed.quaternion.setFromRotationMatrix(reticle.matrix);
-        scene.add(placed);
+      if (reticle.visible && glbModel) {
+        const clone = glbModel.clone();
+        clone.position.setFromMatrixPosition(reticle.matrix);
+        clone.quaternion.setFromRotationMatrix(reticle.matrix);
+        scene.add(clone);
+        selectedModel = clone;
+        initialScale = 1;
       }
     });
     scene.add(controller);
@@ -92,101 +99,44 @@
 
       renderer.render(scene, camera);
     });
-  </script>
-  
-    <script type="module">
-  import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js';
-  import { ARButton } from 'https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/webxr/ARButton.js';
-  import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/loaders/GLTFLoader.js';
 
-  const arButton = document.getElementById('ar-button');
-  const modelViewer = document.getElementById('modelViewer');
-  const modelUrl = new URLSearchParams(window.location.search).get('model');
-
-  arButton.addEventListener('click', async () => {
-    modelViewer.style.display = 'none';
-
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera();
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.xr.enabled = true;
-    document.body.appendChild(renderer.domElement);
-
-    document.body.appendChild(ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] }));
-
-    const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
-    scene.add(light);
-
-    const reticleGeo = new THREE.RingGeometry(0.1, 0.12, 32).rotateX(-Math.PI / 2);
-    const reticleMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
-    const reticle = new THREE.Mesh(reticleGeo, reticleMat);
-    reticle.matrixAutoUpdate = false;
-    reticle.visible = false;
-    scene.add(reticle);
-
-    const loader = new GLTFLoader();
-    let glbModel = null;
-
-    if (modelUrl) {
-      loader.load(modelUrl, gltf => {
-        glbModel = gltf.scene;
-      });
+    function getDistance(t1, t2) {
+      const dx = t1.clientX - t2.clientX;
+      const dy = t1.clientY - t2.clientY;
+      return Math.sqrt(dx * dx + dy * dy);
     }
 
-    const controller = renderer.xr.getController(0);
-    controller.addEventListener('select', () => {
-      if (reticle.visible && glbModel) {
-        const clone = glbModel.clone();
-        clone.position.setFromMatrixPosition(reticle.matrix);
-        clone.quaternion.setFromRotationMatrix(reticle.matrix);
-        scene.add(clone);
+    function getAngle(t1, t2) {
+      return Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX);
+    }
+
+    renderer.domElement.addEventListener('touchstart', (event) => {
+      if (event.touches.length === 2) {
+        initialDistance = getDistance(event.touches[0], event.touches[1]);
+        initialRotation = getAngle(event.touches[0], event.touches[1]);
       }
-    });
-    scene.add(controller);
+    }, false);
 
-    let hitTestSource = null;
-    let hitTestSourceRequested = false;
+    renderer.domElement.addEventListener('touchmove', (event) => {
+      if (!selectedModel || event.touches.length !== 2) return;
 
-    renderer.setAnimationLoop((timestamp, frame) => {
-      if (frame) {
-        const referenceSpace = renderer.xr.getReferenceSpace();
-        const session = renderer.xr.getSession();
+      const newDistance = getDistance(event.touches[0], event.touches[1]);
+      const scaleFactor = newDistance / initialDistance;
+      selectedModel.scale.setScalar(initialScale * scaleFactor);
 
-        if (!hitTestSourceRequested) {
-          session.requestReferenceSpace('viewer').then(space => {
-            session.requestHitTestSource({ space }).then(source => {
-              hitTestSource = source;
-            });
-          });
+      const newRotation = getAngle(event.touches[0], event.touches[1]);
+      const rotationDelta = newRotation - initialRotation;
+      selectedModel.rotation.y += rotationDelta;
+      initialRotation = newRotation;
 
-          session.addEventListener('end', () => {
-            hitTestSourceRequested = false;
-            hitTestSource = null;
-            modelViewer.style.display = 'block';
-            renderer.domElement.remove();
-            document.querySelector('.xr-button')?.remove(); // cleanup ARButton
-          });
+      event.preventDefault();
+    }, { passive: false });
 
-          hitTestSourceRequested = true;
-        }
-
-        if (hitTestSource) {
-          const hitTestResults = frame.getHitTestResults(hitTestSource);
-          if (hitTestResults.length) {
-            const hit = hitTestResults[0];
-            const pose = hit.getPose(referenceSpace);
-            reticle.visible = true;
-            reticle.matrix.fromArray(pose.transform.matrix);
-          } else {
-            reticle.visible = false;
-          }
-        }
+    renderer.domElement.addEventListener('touchend', (event) => {
+      if (selectedModel) {
+        initialScale = selectedModel.scale.x;
       }
-
-      renderer.render(scene, camera);
-    });
-  });
-</script>
+    }, false);
+  </script>
 </body>
 </html>
