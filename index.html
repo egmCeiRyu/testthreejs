@@ -3,37 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Simple Three.js WebXR AR (GLB) / iOS AR Quick Look (USDZ)</title>
+    <title>Simple Web AR (GLB/USDZ)</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Add some specific styles for the iOS "View in AR" button if needed */
+        /* Specific styles for the iOS "View in AR" button */
         #iosArLink {
             display: none; /* Hidden by default, shown for iOS */
-            padding: 12px 25px;
-            font-size: 1.1em;
+            padding: 15px 30px;
+            font-size: 1.2em;
             background-color: #007bff;
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             text-decoration: none; /* Remove underline for links */
-            margin-top: 15px;
+            margin-top: 20px;
             cursor: pointer;
-            width: fit-content; /* Adjust width to content */
+            width: fit-content;
             margin-left: auto;
             margin-right: auto;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s ease, transform 0.2s ease;
         }
         #iosArLink:hover {
             background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+        #iosArLink:active {
+            transform: translateY(0);
         }
     </style>
 </head>
 <body>
     <div id="info">
-        <h1>Three.js WebXR AR</h1>
-        <p id="platform-message">Loading AR...</p>
-        <button id="arButton" disabled>Loading AR...</button>
-        <a id="iosArLink" rel="ar" href="" download="model1.usdz">View in AR (iOS)</a>
-        <p id="status">Waiting for 3D model to load and AR compatibility check...</p>
+        <h1>Augmented Reality Demo</h1>
+        <p id="platform-message">Loading AR experience...</p>
+        <button id="arButton" disabled>Start AR</button>
+        <a id="iosArLink" rel="ar" href="" download="robot.usdz">View in AR (iOS)</a>
+        <p id="status">Checking device compatibility and loading model...</p>
     </div>
 
     <script type="importmap">
@@ -46,73 +52,65 @@
     </script>
     <script type="module">
         import * as THREE from 'three';
-        // Note: Using `three/addons/` for OrbitControls is fine, but for GLTFLoader and ARButton,
-        // we'll stick to the unpkg CDN for simplicity to ensure consistent versions with the button.
-        // It's generally better to either use importmap for all or direct unpkg for all for consistency.
         import { GLTFLoader } from 'https://unpkg.com/three@0.165.0/examples/jsm/loaders/GLTFLoader.js';
         import { ARButton } from 'https://unpkg.com/three@0.165.0/examples/jsm/webxr/ARButton.js';
 
+        // --- Configuration for your model ---
+        const GLB_MODEL_PATH = 'models/robot.glb';
+        const USDZ_MODEL_PATH = 'models/robot.usdz';
+        const MODEL_SCALE = 0.1; // Adjust this if your model is too big/small
+
+        // --- Global Variables (for Three.js) ---
         let camera, scene, renderer;
-        let controller; // To capture user taps
-        let reticle;    // The ring to indicate a detected surface
-        let loadedModel; // The GLB model itself
+        let controller;
+        let reticle;
+        let loadedModel;
 
         let hitTestSource = null;
         let hitTestSourceRequested = false;
 
+        // --- DOM Elements ---
         const container = document.body;
         const arButton = document.getElementById('arButton');
-        const iosArLink = document.getElementById('iosArLink'); // Get the new iOS AR link element
+        const iosArLink = document.getElementById('iosArLink');
         const statusText = document.getElementById('status');
         const infoDiv = document.getElementById('info');
-        const platformMessage = document.getElementById('platform-message'); // New element for messages
+        const platformMessage = document.getElementById('platform-message');
 
-        let modelGlbUrl = '';
-        let modelUsdzUrl = ''; // To store the USDZ URL
-
-        // Function to detect if the device is iOS
+        // --- Platform Detection ---
         function isIOS() {
             return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
         }
 
-        // Get model URL from query parameter
-        const urlParams = new URLSearchParams(window.location.search);
-        modelGlbUrl = urlParams.get('model1'); // Assume 'model' param gives GLB path
-
-        // Infer USDZ path from GLB path, or if explicitly passed, use it.
-        // For this specific alteration, we're assuming the GLB URL is passed,
-        // and we derive the USDZ by replacing .glb with .usdz
-        if (modelGlbUrl) {
-            modelUsdzUrl = modelGlbUrl.replace('.glb', '.usdz');
-        }
-
-
-        // --- Conditional AR setup based on platform ---
+        // --- Main Initialization Logic ---
         if (isIOS()) {
-            // iOS Path: Hide WebXR button, show USDZ link
-            arButton.style.display = 'none';
-            iosArLink.style.display = 'block';
+            // Setup for iOS (AR Quick Look)
+            arButton.style.display = 'none'; // Hide WebXR button
+            iosArLink.style.display = 'block'; // Show iOS AR link
             platformMessage.textContent = 'Tap "View in AR" to launch in Apple AR Quick Look.';
+            statusText.textContent = 'AR experience optimized for iOS native viewer.';
 
-            if (modelUsdzUrl) {
-                iosArLink.href = modelUsdzUrl;
-                iosArLink.setAttribute('download', modelUsdzUrl.substring(modelUsdzUrl.lastIndexOf('/') + 1));
+            if (USDZ_MODEL_PATH) {
+                iosArLink.href = USDZ_MODEL_PATH;
+                // Set download attribute for better naming if user downloads
+                iosArLink.setAttribute('download', USDZ_MODEL_PATH.substring(USDZ_MODEL_PATH.lastIndexOf('/') + 1));
             } else {
                 iosArLink.textContent = 'USDZ Model Not Found';
-                iosArLink.disabled = true; // Disable if no USDZ
+                iosArLink.disabled = true; // Disable if no USDZ path
                 platformMessage.textContent = 'Error: USDZ model path missing.';
             }
 
         } else {
-            // Android/Other WebXR Path: Hide USDZ link, proceed with WebXR setup
-            iosArLink.style.display = 'none';
-            arButton.style.display = 'block';
-            platformMessage.textContent = 'This is a simple markerless AR example.';
+            // Setup for Android/Other WebXR-compatible browsers
+            iosArLink.style.display = 'none'; // Hide iOS AR link
+            arButton.style.display = 'block'; // Show WebXR button
+            platformMessage.textContent = 'On supported devices, tap "Start AR" and point your camera at a flat surface.';
             
             initWebXR(); // Initialize Three.js/WebXR
-            animate();
+            animate();   // Start the animation loop for WebXR
         }
 
+        // --- Three.js WebXR Specific Functions (only for non-iOS) ---
         function initWebXR() {
             scene = new THREE.Scene();
 
@@ -124,64 +122,59 @@
             renderer.xr.enabled = true; // Crucial: Enable WebXR for the renderer
             container.appendChild(renderer.domElement);
 
-            // Add some basic lighting
+            // Basic lighting
             const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 3);
             light.position.set(0.5, 1, 0.25);
             scene.add(light);
 
-            // Create the reticle (the little ring that helps place objects)
+            // Reticle for surface detection
             reticle = new THREE.Mesh(
                 new THREE.RingGeometry(0.08, 0.12, 32).rotateX(-Math.PI / 2),
                 new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 })
             );
-            reticle.matrixAutoUpdate = false; // We'll manually update its position from hit-test results
+            reticle.matrixAutoUpdate = false;
             reticle.visible = false;
             scene.add(reticle);
 
-            // Load the GLB model using the URL from query param
+            // Load the GLB model
             const loader = new GLTFLoader();
-            if (modelGlbUrl) {
-                loader.load(modelGlbUrl, function (gltf) {
-                    loadedModel = gltf.scene;
-                    loadedModel.scale.set(0.1, 0.1, 0.1); 
-                    loadedModel.visible = false; 
+            loader.load(GLB_MODEL_PATH, function (gltf) {
+                loadedModel = gltf.scene;
+                loadedModel.scale.set(MODEL_SCALE, MODEL_SCALE, MODEL_SCALE); 
+                loadedModel.visible = false; 
 
-                    if (gltf.animations && gltf.animations.length) {
-                        const mixer = new THREE.AnimationMixer(loadedModel);
-                        gltf.animations.forEach((clip) => {
-                            mixer.clipAction(clip).play();
-                        });
-                        loadedModel.mixer = mixer; 
-                    }
+                // Handle animations if present
+                if (gltf.animations && gltf.animations.length) {
+                    const mixer = new THREE.AnimationMixer(loadedModel);
+                    gltf.animations.forEach((clip) => {
+                        mixer.clipAction(clip).play();
+                    });
+                    loadedModel.mixer = mixer; 
+                }
 
-                    arButton.textContent = 'START AR';
-                    arButton.disabled = false;
-                    statusText.textContent = 'Model loaded. Tap "START AR" and point camera at a flat surface.';
+                arButton.textContent = 'START AR';
+                arButton.disabled = false;
+                statusText.textContent = 'Model loaded. Tap "START AR" and point camera at a flat surface.';
 
-                }, undefined, function (error) {
-                    console.error('Error loading GLB model:', error);
-                    statusText.textContent = 'Error loading 3D model.';
-                    arButton.disabled = true;
-                });
-            } else {
-                 console.error("No GLB model URL found for WebXR.");
-                 statusText.textContent = "Error: GLB model not specified for WebXR.";
-                 arButton.disabled = true;
-            }
-
-            // AR Button setup from Three.js examples (handles WebXR session request)
-            const button = ARButton.createButton(renderer, { 
-                requiredFeatures: ['hit-test'],
+            }, undefined, function (error) {
+                console.error('Error loading GLB model:', error);
+                statusText.textContent = 'Error loading 3D model. Please check the console.';
+                arButton.disabled = true;
             });
-            arButton.parentNode.replaceChild(button, arButton); // Replace our placeholder button with the Three.js one
 
-            // Controller for user interaction (tap to place model)
+            // Create the WebXR AR button
+            const button = ARButton.createButton(renderer, { 
+                requiredFeatures: ['hit-test']
+            });
+            arButton.parentNode.replaceChild(button, arButton);
+
+            // Controller for tap events
             controller = renderer.xr.getController(0);
             controller.addEventListener('select', onSelect);
             scene.add(controller);
 
             window.addEventListener('resize', onWindowResize);
-        } // End initWebXR
+        }
 
         function onSelect() {
             if (reticle.visible && loadedModel) {
@@ -198,7 +191,6 @@
                         placedInstance.mixer.clipAction(clip).play();
                     });
                 }
-
             } else {
                 statusText.textContent = 'Move your device to find a surface to place the model.';
             }
@@ -211,24 +203,23 @@
         }
 
         function animate() {
-            // renderer.setAnimationLoop calls render() automatically for WebXR
-            // This function is only called if initWebXR runs (i.e., not on iOS)
+            // renderer.setAnimationLoop will call render() automatically during an XR session
         }
 
         function render(timestamp, frame) {
-            const delta = 0; // Or use a Clock for precise animation timing
-            if (loadedModel && loadedModel.mixer) {
-                scene.traverse(obj => {
-                    if (obj.mixer) {
-                        obj.mixer.update(delta);
-                    }
-                });
-            }
+            // Update animations for any placed models that have a mixer
+            const delta = 0; // Use a proper clock for real animation delta
+            scene.traverse(obj => {
+                if (obj.mixer) {
+                    obj.mixer.update(delta);
+                }
+            });
 
             if (frame) {
                 const referenceSpace = renderer.xr.getReferenceSpace();
                 const session = renderer.xr.getSession();
 
+                // Request hit test source once per session
                 if (!hitTestSourceRequested) {
                     session.requestHitTestSource({ space: referenceSpace }).then(function (source) {
                         hitTestSource = source;
@@ -243,6 +234,7 @@
                     infoDiv.style.display = 'none'; 
                 }
 
+                // Get hit test results to position the reticle
                 if (hitTestSource) {
                     const hitTestResults = frame.getHitTestResults(hitTestSource);
 
@@ -257,7 +249,6 @@
                     }
                 }
             }
-
             renderer.render(scene, camera);
         }
     </script>
