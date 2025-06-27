@@ -40,10 +40,12 @@
                     </svg>
       <!-- Botão voltar -->
       <img id="ar-button" src="icon/arbtn.png" slot="ar-button" alt="arbtn">
+      <!--
       <div id="controls" class="dim glass">
         <label for="show-dimensions">寸法を示す：</label>
         <input id="show-dimensions" type="checkbox" checked="true">
       </div>
+      -->
     </model-viewer>
     <div id="buttonsGRP">
       <a href="newMenu.html">
@@ -88,21 +90,21 @@
       const urlParams = new URLSearchParams(window.location.search);
       const modelUrl = urlParams.get('model');
       const modelViewer = document.getElementById('modelViewer');
-      const checkbox = modelViewer.querySelector('#show-dimensions');
-
-      function setVisibility(visible) {
-        dimElements.forEach((element) => {
-          if (visible) {
-            element.classList.remove('hide');
-          } else {
-            element.classList.add('hide');
-          }
-        });
-    }
-
-      checkbox.addEventListener('change', () => {
-        setVisibility(checkbox.checked);
-      });
+      //const checkbox = modelViewer.querySelector('#show-dimensions');
+//
+      //function setVisibility(visible) {
+      //  dimElements.forEach((element) => {
+      //    if (visible) {
+      //      element.classList.remove('hide');
+      //    } else {
+      //      element.classList.add('hide');
+      //    }
+      //  });
+    //}
+//
+      //checkbox.addEventListener('change', () => {
+      //  setVisibility(checkbox.checked);
+      //});
 
 
       if (modelUrl) {
@@ -171,7 +173,7 @@
       // Obter nome base do modelo (ex: chair.glb -> chair)
       let modelKey = "";
       if (modelUrl) {
-        modelKey = modelUrl.split('/').pop().split('.')[0]; 
+        modelKey = modelUrl.split('/').pop().split('.')[0]; // 'chair.glb' → 'chair'
 
       if (modelSpecs[modelKey]) {
         const spec = modelSpecs[modelKey];
