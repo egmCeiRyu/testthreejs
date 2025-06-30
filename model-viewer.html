@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="jp">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -40,12 +40,10 @@
                     </svg>
       <!-- Botão voltar -->
       <img id="ar-button" src="icon/arbtn.png" slot="ar-button" alt="arbtn">
-      <!--
       <div id="controls" class="dim glass">
         <label for="show-dimensions">寸法を示す：</label>
         <input id="show-dimensions" type="checkbox" checked="true">
       </div>
-      -->
     </model-viewer>
     <div id="buttonsGRP">
       <a href="newMenu.html">
@@ -90,21 +88,21 @@
       const urlParams = new URLSearchParams(window.location.search);
       const modelUrl = urlParams.get('model');
       const modelViewer = document.getElementById('modelViewer');
-      //const checkbox = modelViewer.querySelector('#show-dimensions');
-//
-      //function setVisibility(visible) {
-      //  dimElements.forEach((element) => {
-      //    if (visible) {
-      //      element.classList.remove('hide');
-      //    } else {
-      //      element.classList.add('hide');
-      //    }
-      //  });
-    //}
-//
-      //checkbox.addEventListener('change', () => {
-      //  setVisibility(checkbox.checked);
-      //});
+      const checkbox = modelViewer.querySelector('#show-dimensions');
+
+      function setVisibility(visible) {
+        dimElements.forEach((element) => {
+          if (visible) {
+            element.classList.remove('hide');
+          } else {
+            element.classList.add('hide');
+          }
+        });
+    }
+
+      checkbox.addEventListener('change', () => {
+        setVisibility(checkbox.checked);
+      });
 
 
       if (modelUrl) {
